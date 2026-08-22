@@ -24,7 +24,7 @@ export function MerchSection({ items }: MerchSectionProps) {
       <div className="relative mx-auto max-w-6xl">
         {/* Titre centré. "relative" à nouveau requis : le logo en filigrane
             juste en dessous est en `absolute`, centré derrière le texte. */}
-        <div className="relative mx-auto mb-12 w-fit">
+        <div className="relative mx-auto mb-12 w-fit" data-aos="fade-up">
           <Image
             src="/assets/LOGO_INSTINCT_PURPLE.png"
             alt=""
@@ -44,7 +44,7 @@ export function MerchSection({ items }: MerchSectionProps) {
           // flex-wrap plutôt qu'une grid : les cartes (largeur fixe) tiennent
           // à 3 par ligne sur desktop, et `justify-center` centre les lignes
           // incomplètes (ex. un seul article) au lieu de les coller à gauche.
-          <div className="flex flex-wrap justify-center gap-10">
+          <div className="flex flex-wrap justify-center gap-10" data-aos="fade-up">
             {items.map((item) => {
               const cover = item.images[0];
               return (

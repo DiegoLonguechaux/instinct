@@ -27,7 +27,7 @@ export function HeroSection({ bandName, logoUrl }: HeroSectionProps) {
       />
       <div className="absolute inset-0 bg-instinct-bg/10" />
 
-      <div className="relative z-10 flex flex-col items-center gap-6">
+      <div className="relative z-10 flex flex-col items-center gap-6" data-aos="fade-up">
         {logoUrl && (
           <Image
             src={logoUrl}

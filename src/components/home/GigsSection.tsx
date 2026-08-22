@@ -66,7 +66,7 @@ export function GigsSection({ bandName, concerts, contactEmail }: GigsSectionPro
       <div className="relative mx-auto max-w-4xl">
         {/* Titre centré. "relative" à nouveau requis : le logo en filigrane
             juste en dessous est en `absolute`, centré derrière le texte. */}
-        <div className="relative mx-auto mb-12 w-fit">
+        <div className="relative mx-auto mb-12 w-fit" data-aos="fade-up">
           <Image
             src="/assets/LOGO_INSTINCT_PURPLE.png"
             alt=""
@@ -111,7 +111,7 @@ export function GigsSection({ bandName, concerts, contactEmail }: GigsSectionPro
             {tab === "futures" ? "Aucune date à venir pour le moment." : "Aucune date passée pour le moment."}
           </p>
         ) : (
-          <ul className="divide-y divide-instinct-foreground/10">
+          <ul className="divide-y divide-instinct-foreground/10" data-aos="fade-up">
             {activeList.map((concert) => {
               const { day, month, year } = formatConcertDate(concert.date);
               return (

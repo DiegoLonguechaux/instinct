@@ -1,3 +1,4 @@
+import { AosInit } from "@/components/home/AosInit";
 import { BandSection } from "@/components/home/BandSection";
 import { GallerySection } from "@/components/home/GallerySection";
 import { GigsSection } from "@/components/home/GigsSection";
@@ -76,6 +77,8 @@ export default async function Home() {
 
   return (
     <>
+      <AosInit />
+
       <SiteHeader
         bandName={groupInfo?.bandName || "INSTINCT"}
         logoUrl={groupInfo?.logoUrl}

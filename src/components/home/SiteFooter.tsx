@@ -23,7 +23,7 @@ export function SiteFooter({ bandName, logoUrl, links, contactEmail, pressKitUrl
           {logoUrl && <Image src={logoUrl} alt={bandName} width={160} height={40} className="h-16 w-auto" />}
         </div>
 
-        <div className="mt-16 grid grid-cols-1 gap-10 sm:grid-cols-3">
+        <div className="mt-16 grid grid-cols-1 gap-10 sm:grid-cols-3" data-aos="fade-up">
           <div className="space-y-8">
             <div>
               <h3 className="text-sm font-semibold tracking-widest text-instinct-foreground uppercase">

@@ -66,7 +66,7 @@ export function ReleasesSection({ release }: ReleasesSectionProps) {
       <div className="relative mx-auto max-w-4xl">
         {/* Titre centré. "relative" à nouveau requis : le logo en filigrane
             juste en dessous est en `absolute`, centré derrière le texte. */}
-        <div className="relative mx-auto mb-12 w-fit">
+        <div className="relative mx-auto mb-12 w-fit" data-aos="fade-up">
           <Image
             src="/assets/LOGO_INSTINCT_PURPLE.png"
             alt=""
@@ -84,7 +84,7 @@ export function ReleasesSection({ release }: ReleasesSectionProps) {
           <div className="grid grid-cols-1 items-center gap-10 sm:grid-cols-[minmax(0,320px)_1fr] sm:gap-12">
             {/* "relative" : la pochette est en `fill`, elle a besoin de ce
                 conteneur pour se dimensionner (carré, convention album art). */}
-            <div className="relative mx-auto aspect-square w-full max-w-xs overflow-visible">
+            <div className="relative mx-auto aspect-square w-full max-w-xs overflow-visible" data-aos="fade-left">
               {release.coverUrl && (
                 <Image
                   src={release.coverUrl}
@@ -96,7 +96,7 @@ export function ReleasesSection({ release }: ReleasesSectionProps) {
               )}
             </div>
 
-            <div>
+            <div data-aos="fade-right">
               <h3 className="font-serif text-3xl leading-tight text-instinct-purple uppercase sm:text-4xl md:text-5xl">
                 {release.name}
               </h3>

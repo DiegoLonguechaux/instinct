@@ -23,7 +23,7 @@ export function BandSection({ bandName, bio, groupPhotoUrl, contactEmail }: Band
       <div className="relative mx-auto max-w-6xl">
         {/* Titre centré. "relative" à nouveau requis : le logo en filigrane
             juste en dessous est en `absolute`, centré derrière le texte. */}
-        <div className="relative mx-auto mb-12 w-fit">
+        <div className="relative mx-auto mb-12 w-fit" data-aos="fade-up">
           <Image
             src="/assets/LOGO_INSTINCT_PURPLE.png"
             alt=""
@@ -43,7 +43,7 @@ export function BandSection({ bandName, bio, groupPhotoUrl, contactEmail }: Band
             // enfants sur toute la hauteur de la ligne, donc le fil barbelé
             // (1re colonne) prend automatiquement la hauteur de la bio (2e
             // colonne, qui définit la hauteur de la ligne).
-            <div className="grid grid-cols-[auto_1fr] gap-4 sm:gap-6">
+            <div className="grid grid-cols-[auto_1fr] gap-4 sm:gap-6" data-aos="fade-right">
               {/* eslint-disable-next-line @next/next/no-img-element -- barbed_wire.svg n'a pas besoin de l'optimiseur next/image */}
               <img
                 src="/assets/barbed_wire.svg"
@@ -67,6 +67,7 @@ export function BandSection({ bandName, bio, groupPhotoUrl, contactEmail }: Band
             <img
               src={groupPhotoUrl}
               alt={bandName}
+              data-aos="fade-left"
               className="mx-auto h-auto w-full max-w-lg"
             />
           )}

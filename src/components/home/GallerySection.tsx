@@ -69,7 +69,7 @@ export function GallerySection({ photos }: GallerySectionProps) {
       <div className="relative mx-auto max-w-6xl">
         {/* Titre centré. "relative" à nouveau requis : le logo en filigrane
             juste en dessous est en `absolute`, centré derrière le texte. */}
-        <div className="relative mx-auto mb-12 w-fit">
+        <div className="relative mx-auto mb-12 w-fit" data-aos="fade-up">
           <Image
             src="/assets/LOGO_INSTINCT_PURPLE.png"
             alt=""
@@ -86,7 +86,10 @@ export function GallerySection({ photos }: GallerySectionProps) {
         {photos.length === 0 ? (
           <p className="text-center text-sm text-instinct-foreground/60">Aucune photo pour le moment.</p>
         ) : (
-          <div className="grid auto-rows-[130px] grid-cols-2 gap-3 sm:auto-rows-[150px] sm:grid-cols-3 lg:grid-cols-4">
+          <div
+            className="grid auto-rows-[130px] grid-cols-2 gap-3 sm:auto-rows-[150px] sm:grid-cols-3 lg:grid-cols-4"
+            data-aos="fade-up"
+          >
             {photos.map((photo, index) => (
               <button
                 key={photo.id}
