@@ -36,6 +36,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# fichiers uploadés depuis l'admin (migrés vers Vercel Blob, ne doivent plus
+# être versionnés — les fichiers déjà commités avant cette migration restent
+# dans l'historique, cette règle ne bloque que les nouveaux ajouts)
+/public/uploads
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

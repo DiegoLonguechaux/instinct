@@ -1,6 +1,32 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
-const LinksSchema = new mongoose.Schema(
+export interface ILinks {
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  youtube?: string;
+  spotify?: string;
+  deezer?: string;
+  appleMusic?: string;
+  amazonMusic?: string;
+  youtubeMusic?: string;
+  bandcamp?: string;
+  soundcloud?: string;
+}
+
+export interface IGroupInfo extends Document {
+  bandName: string;
+  bio?: string;
+  groupPhotoUrl?: string;
+  logoUrl?: string;
+  pressKitUrl?: string;
+  contactEmail?: string;
+  links?: ILinks;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const LinksSchema = new mongoose.Schema<ILinks>(
   {
     instagram: { type: String, default: '' },
     facebook: { type: String, default: '' },
@@ -17,7 +43,7 @@ const LinksSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const GroupInfoSchema = new mongoose.Schema(
+const GroupInfoSchema = new mongoose.Schema<IGroupInfo>(
   {
     bandName: {
       type: String,
@@ -57,4 +83,5 @@ const GroupInfoSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.GroupInfo || mongoose.model('GroupInfo', GroupInfoSchema);
+export default (mongoose.models.GroupInfo as Model<IGroupInfo>) ||
+  mongoose.model<IGroupInfo>('GroupInfo', GroupInfoSchema);

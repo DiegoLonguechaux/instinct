@@ -15,6 +15,13 @@ import GroupInfoModel from "@/models/GroupInfo";
 import MerchModel from "@/models/Merch";
 import ReleaseModel from "@/models/Release";
 
+// Sans appel explicite à cookies()/headers(), Next.js préférerait générer
+// cette page une fois pour toutes au build (contenu figé, ne refléterait
+// jamais les modifications faites depuis l'admin sans redéploiement). On
+// force le rendu dynamique pour que chaque visite lise les données Mongo
+// à jour.
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   await dbConnect();
 

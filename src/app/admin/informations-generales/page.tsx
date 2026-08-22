@@ -1,5 +1,6 @@
 'use client';
 
+import { upload } from '@vercel/blob/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -353,23 +354,16 @@ export default function InformationsGeneralesPage() {
     }
 
     try {
-      const response = await fetch('/api/admin/upload-image', {
-        method: 'POST',
-        headers: { 'Content-Type': file.type },
-        body: file,
+      const blob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/admin/upload-image',
       });
 
-      if (!response.ok) {
-        const errorPayload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(errorPayload?.error || 'Upload impossible');
-      }
-
-      const payload = await response.json();
       if (imageType === 'group') {
-        setForm((prev) => ({ ...prev, groupPhotoUrl: payload.url }));
+        setForm((prev) => ({ ...prev, groupPhotoUrl: blob.url }));
         setGroupPhotoPreview('');
       } else {
-        setForm((prev) => ({ ...prev, logoUrl: payload.url }));
+        setForm((prev) => ({ ...prev, logoUrl: blob.url }));
         setLogoPreview('');
       }
     } catch (error) {
@@ -388,19 +382,12 @@ export default function InformationsGeneralesPage() {
     setIsUploadingPressKit(true);
 
     try {
-      const response = await fetch('/api/admin/upload-image', {
-        method: 'POST',
-        headers: { 'Content-Type': file.type },
-        body: file,
+      const blob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/admin/upload-image',
       });
 
-      if (!response.ok) {
-        const errorPayload = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(errorPayload?.error || 'Upload impossible');
-      }
-
-      const payload = await response.json();
-      setForm((prev) => ({ ...prev, pressKitUrl: payload.url }));
+      setForm((prev) => ({ ...prev, pressKitUrl: blob.url }));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Erreur lors de l’upload du kit press.');
     } finally {

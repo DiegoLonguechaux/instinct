@@ -1,6 +1,15 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
-const MerchSchema = new mongoose.Schema(
+export interface IMerch extends Document {
+  title: string;
+  price: number;
+  sizes: string[];
+  images: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const MerchSchema = new mongoose.Schema<IMerch>(
   {
     title: {
       type: String,
@@ -24,4 +33,4 @@ const MerchSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Merch || mongoose.model('Merch', MerchSchema);
+export default (mongoose.models.Merch as Model<IMerch>) || mongoose.model<IMerch>('Merch', MerchSchema);

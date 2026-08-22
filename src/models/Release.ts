@@ -1,6 +1,25 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
-const ReleaseLinksSchema = new mongoose.Schema(
+export interface IReleaseLinks {
+  spotify?: string;
+  deezer?: string;
+  appleMusic?: string;
+  amazonMusic?: string;
+  youtubeMusic?: string;
+  bandcamp?: string;
+  soundcloud?: string;
+}
+
+export interface IRelease extends Document {
+  type: 'single' | 'ep' | 'album';
+  name: string;
+  coverUrl?: string;
+  links?: IReleaseLinks;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const ReleaseLinksSchema = new mongoose.Schema<IReleaseLinks>(
   {
     spotify: { type: String, default: '' },
     deezer: { type: String, default: '' },
@@ -13,7 +32,7 @@ const ReleaseLinksSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const ReleaseSchema = new mongoose.Schema(
+const ReleaseSchema = new mongoose.Schema<IRelease>(
   {
     type: {
       type: String,
@@ -38,4 +57,4 @@ const ReleaseSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Release || mongoose.model('Release', ReleaseSchema);
+export default (mongoose.models.Release as Model<IRelease>) || mongoose.model<IRelease>('Release', ReleaseSchema);

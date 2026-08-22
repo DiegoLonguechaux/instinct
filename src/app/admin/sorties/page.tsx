@@ -1,5 +1,6 @@
 'use client';
 
+import { upload } from '@vercel/blob/client';
 import { AdminModal } from '@/components/admin/admin-modal';
 import { DataTable } from '@/components/admin/data-table';
 import { Button } from '@/components/ui/button';
@@ -108,18 +109,11 @@ export default function SortiesPage() {
     setIsUploadingCover(true);
 
     try {
-      const response = await fetch('/api/admin/upload-image', {
-        method: 'POST',
-        headers: { 'Content-Type': file.type },
-        body: file,
+      const blob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/admin/upload-image',
       });
-
-      if (!response.ok) {
-        throw new Error('Upload impossible');
-      }
-
-      const payload = (await response.json()) as { url: string };
-      crud.setForm((prev) => ({ ...prev, coverUrl: payload.url }));
+      crud.setForm((prev) => ({ ...prev, coverUrl: blob.url }));
     } catch {
       crud.setMessage('Erreur lors de l’upload de la pochette.');
     } finally {

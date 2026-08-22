@@ -1,6 +1,15 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
-const ConcertSchema = new mongoose.Schema(
+export interface IConcert extends Document {
+  date: Date;
+  venue: string;
+  description?: string;
+  link?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const ConcertSchema = new mongoose.Schema<IConcert>(
   {
     date: {
       type: Date,
@@ -25,4 +34,4 @@ const ConcertSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Concert || mongoose.model('Concert', ConcertSchema);
+export default (mongoose.models.Concert as Model<IConcert>) || mongoose.model<IConcert>('Concert', ConcertSchema);

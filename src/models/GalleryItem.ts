@@ -1,6 +1,14 @@
-import mongoose from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 
-const GalleryItemSchema = new mongoose.Schema(
+export interface IGalleryItem extends Document {
+  title: string;
+  description?: string;
+  imageUrl: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const GalleryItemSchema = new mongoose.Schema<IGalleryItem>(
   {
     title: {
       type: String,
@@ -21,4 +29,5 @@ const GalleryItemSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.GalleryItem || mongoose.model('GalleryItem', GalleryItemSchema);
+export default (mongoose.models.GalleryItem as Model<IGalleryItem>) ||
+  mongoose.model<IGalleryItem>('GalleryItem', GalleryItemSchema);
