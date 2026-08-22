@@ -31,6 +31,7 @@ type GroupInfoForm = {
   bio: string;
   groupPhotoUrl: string;
   logoUrl: string;
+  pressKitUrl: string;
   contactEmail: string;
   links: {
     instagram: string;
@@ -52,6 +53,7 @@ const defaultForm: GroupInfoForm = {
   bio: '',
   groupPhotoUrl: '',
   logoUrl: '',
+  pressKitUrl: '',
   contactEmail: '',
   links: {
     instagram: '',
@@ -247,6 +249,7 @@ export default function InformationsGeneralesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingPressKit, setIsUploadingPressKit] = useState(false);
   const [message, setMessage] = useState<string>('');
   const [groupPhotoPreview, setGroupPhotoPreview] = useState<string>('');
   const [logoPreview, setLogoPreview] = useState<string>('');
@@ -350,12 +353,10 @@ export default function InformationsGeneralesPage() {
     }
 
     try {
-      const data = new FormData();
-      data.append('file', file);
-
       const response = await fetch('/api/admin/upload-image', {
         method: 'POST',
-        body: data,
+        headers: { 'Content-Type': file.type },
+        body: file,
       });
 
       if (!response.ok) {
@@ -379,6 +380,31 @@ export default function InformationsGeneralesPage() {
       } else {
         setIsUploadingLogo(false);
       }
+    }
+  };
+
+  const uploadPressKit = async (file: File) => {
+    setMessage('');
+    setIsUploadingPressKit(true);
+
+    try {
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+
+      if (!response.ok) {
+        const errorPayload = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(errorPayload?.error || 'Upload impossible');
+      }
+
+      const payload = await response.json();
+      setForm((prev) => ({ ...prev, pressKitUrl: payload.url }));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Erreur lors de l’upload du kit press.');
+    } finally {
+      setIsUploadingPressKit(false);
     }
   };
 
@@ -469,6 +495,35 @@ export default function InformationsGeneralesPage() {
                 />
               )}
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label htmlFor="pressKit">Kit press (PDF ou ZIP)</Label>
+            <Input
+              id="pressKit"
+              type="file"
+              accept="application/pdf,application/zip,application/x-zip-compressed,.pdf,.zip"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  uploadPressKit(file);
+                }
+              }}
+            />
+            {isUploadingPressKit && <p className="text-sm text-slate-600">Upload en cours...</p>}
+            {form.pressKitUrl && (
+              <p className="text-sm text-slate-600">
+                Fichier actuel :{' '}
+                <a
+                  href={form.pressKitUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-2"
+                >
+                  {form.pressKitUrl.split('/').pop()}
+                </a>
+              </p>
+            )}
           </div>
 
           <div className="space-y-4">

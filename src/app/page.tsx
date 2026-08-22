@@ -1,6 +1,11 @@
 import { BandSection } from "@/components/home/BandSection";
+import { GallerySection } from "@/components/home/GallerySection";
+import { GigsSection } from "@/components/home/GigsSection";
 import { HeroSection } from "@/components/home/HeroSection";
+import { MerchSection } from "@/components/home/MerchSection";
+import { ReleasesSection } from "@/components/home/ReleasesSection";
 import { SectionDivider } from "@/components/home/SectionDivider";
+import { SiteFooter } from "@/components/home/SiteFooter";
 import { SiteHeader } from "@/components/home/SiteHeader";
 import dbConnect from "@/lib/db";
 import ConcertModel from "@/models/Concert";
@@ -8,14 +13,6 @@ import GalleryItemModel from "@/models/GalleryItem";
 import GroupInfoModel from "@/models/GroupInfo";
 import MerchModel from "@/models/Merch";
 import ReleaseModel from "@/models/Release";
-
-function formatDate(value: Date | string) {
-  const date = new Date(value);
-  return new Intl.DateTimeFormat("fr-FR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
 
 export default async function Home() {
   await dbConnect();
@@ -34,10 +31,48 @@ export default async function Home() {
         bio: groupInfoDoc.bio ?? "",
         groupPhotoUrl: groupInfoDoc.groupPhotoUrl ?? "",
         logoUrl: groupInfoDoc.logoUrl ?? "",
+        pressKitUrl: groupInfoDoc.pressKitUrl ?? "",
         contactEmail: groupInfoDoc.contactEmail ?? "",
         links: groupInfoDoc.links ?? {},
       }
     : null;
+
+  // GigsSection est un Client Component (onglets) : on ne peut pas lui passer
+  // les documents Mongoose bruts (ObjectId non sérialisable) tels quels.
+  const concerts = concertsDocs.map((concert) => ({
+    id: String(concert._id),
+    date: new Date(concert.date).toISOString(),
+    venue: concert.venue ?? "",
+    description: concert.description ?? "",
+    link: concert.link ?? "",
+  }));
+
+  // "Notre EP" : on met en avant la sortie la plus récente.
+  const latestReleaseDoc = releasesDocs[0];
+  const latestRelease = latestReleaseDoc
+    ? {
+        id: String(latestReleaseDoc._id),
+        type: latestReleaseDoc.type,
+        name: latestReleaseDoc.name ?? "",
+        coverUrl: latestReleaseDoc.coverUrl ?? "",
+        links: latestReleaseDoc.links ?? {},
+      }
+    : undefined;
+
+  const merch = merchDocs.map((item) => ({
+    id: String(item._id),
+    title: item.title ?? "",
+    images: item.images ?? [],
+  }));
+
+  // GallerySection est un Client Component (lightbox) : mêmes contraintes de
+  // sérialisation que pour GigsSection.
+  const galleryPhotos = galleryDocs.map((photo) => ({
+    id: String(photo._id),
+    title: photo.title ?? "",
+    description: photo.description ?? "",
+    imageUrl: photo.imageUrl ?? "",
+  }));
 
   return (
     <>
@@ -55,7 +90,7 @@ export default async function Home() {
         contactEmail={groupInfo?.contactEmail}
       />
 
-      <SectionDivider src="/assets/br-2.png" />
+      <SectionDivider src="/assets/br-1.png" />
 
       <BandSection
         bandName={groupInfo?.bandName || "INSTINCT"}
@@ -64,87 +99,36 @@ export default async function Home() {
         contactEmail={groupInfo?.contactEmail}
       />
 
-      {/* Sections suivantes : pas encore intégrées visuellement, seulement le
-          fetch de données + les ancres pour que la nav fonctionne dès maintenant. */}
-      <main className="space-y-8 bg-instinct-bg p-6 text-instinct-foreground">
+      <SectionDivider src="/assets/br-2.png" />
 
-      <section id="nos-dates" className="scroll-mt-20">
-        <h2 className="text-xl font-semibold">Concerts</h2>
-        {concertsDocs.length === 0 ? (
-          <p>Aucun concert.</p>
-        ) : (
-          <ul>
-            {concertsDocs.map((concert) => (
-              <li key={String(concert._id)}>
-                <strong>{formatDate(concert.date)}</strong> — {concert.venue}
-                {concert.description ? ` (${concert.description})` : ""}
-                {concert.link ? (
-                  <>
-                    {" "}
-                    <a href={concert.link} target="_blank" rel="noreferrer">Lien</a>
-                  </>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <GigsSection
+        bandName={groupInfo?.bandName || "INSTINCT"}
+        concerts={concerts}
+        contactEmail={groupInfo?.contactEmail}
+      />
 
-      <section id="notre-ep" className="scroll-mt-20">
-        <h2 className="text-xl font-semibold">Sorties</h2>
-        {releasesDocs.length === 0 ? (
-          <p>Aucune sortie.</p>
-        ) : (
-          <ul>
-            {releasesDocs.map((release) => (
-              <li key={String(release._id)}>
-                <strong>{release.type?.toUpperCase()}</strong> — {release.name}
-                {release.coverUrl ? ` | pochette: ${release.coverUrl}` : ""}
-                {release.links ? (
-                  <pre>{JSON.stringify(release.links, null, 2)}</pre>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <SectionDivider src="/assets/br-3.png" />
 
-      <section id="le-merch" className="scroll-mt-20">
-        <h2 className="text-xl font-semibold">Merch</h2>
-        {merchDocs.length === 0 ? (
-          <p>Aucun article merch.</p>
-        ) : (
-          <ul>
-            {merchDocs.map((item) => (
-              <li key={String(item._id)}>
-                <strong>{item.title}</strong> — {item.price}€
-                {item.sizes?.length ? ` | tailles: ${item.sizes.join(", ")}` : ""}
-                {item.images?.length ? (
-                  <pre>{JSON.stringify(item.images, null, 2)}</pre>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <ReleasesSection
+        bandName={groupInfo?.bandName || "INSTINCT"}
+        release={latestRelease}
+      />
 
-      <section id="la-galerie" className="scroll-mt-20">
-        <h2 className="text-xl font-semibold">Galerie</h2>
-        {galleryDocs.length === 0 ? (
-          <p>Aucune photo.</p>
-        ) : (
-          <ul>
-            {galleryDocs.map((photo) => (
-              <li key={String(photo._id)}>
-                <strong>{photo.title}</strong>
-                {photo.description ? ` — ${photo.description}` : ""}
-                {photo.imageUrl ? ` | image: ${photo.imageUrl}` : ""}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      </main>
+      <SectionDivider src="/assets/br-4.png" />
+
+      <MerchSection items={merch} />
+
+      <SectionDivider src="/assets/br-5.png" />
+
+      <GallerySection photos={galleryPhotos} />
+
+      <SiteFooter
+        bandName={groupInfo?.bandName || "INSTINCT"}
+        logoUrl={groupInfo?.logoUrl}
+        links={groupInfo?.links}
+        contactEmail={groupInfo?.contactEmail}
+        pressKitUrl={groupInfo?.pressKitUrl}
+      />
     </>
   );
 }

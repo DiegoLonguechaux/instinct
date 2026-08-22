@@ -39,6 +39,11 @@ const GroupInfoSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    pressKitUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     contactEmail: {
       type: String,
       default: '',

@@ -48,8 +48,6 @@
 
   --color-instinct-bg: var(--instinct-bg);
   --color-instinct-purple: var(--instinct-purple);
-  --color-instinct-purple-dark: var(--instinct-purple-dark);
-  --color-instinct-magenta: var(--instinct-magenta);
   --color-instinct-foreground: var(--instinct-foreground);
 }
 
@@ -88,11 +86,9 @@
   --sidebar-ring: oklch(0.708 0 0);
 
   /* INSTINCT — thème sombre de la homepage publique */
-  --instinct-bg: oklch(0.14 0.025 305);
-  --instinct-purple: oklch(0.55 0.24 305);
-  --instinct-purple-dark: oklch(0.28 0.14 300);
-  --instinct-magenta: oklch(0.6 0.25 335);
-  --instinct-foreground: oklch(0.97 0.01 300);
+  --instinct-bg: #000000;
+  --instinct-purple: #9D75A6;
+  --instinct-foreground: #FFFFFF;
 }
 
 .dark {
@@ -141,26 +137,11 @@
   }
 }
 
-/* Bio du groupe (HTML brut Tiptap) : une puce "barbelé" avant chaque
-   paragraphe de premier niveau, sans avoir à parser le HTML côté JS. */
+/* Bio du groupe (HTML brut Tiptap) : espacement entre paragraphes. La puce
+   "barbelé" par paragraphe a été retirée (redondante avec le grand fil
+   barbelé vertical affiché à gauche de la bio dans BandSection). */
 @layer components {
-  .bio-content > p {
-    position: relative;
-    padding-left: 2rem;
-  }
   .bio-content > p + p {
     margin-top: 1.25rem;
-  }
-  .bio-content > p::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0.35em;
-    width: 1.5rem;
-    height: 0.3rem;
-    background-image: url("/assets/barbed_wired_tab.svg");
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: left center;
   }
 }

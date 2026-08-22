@@ -43,12 +43,10 @@ function formatPrice(price: number) {
 }
 
 async function uploadOneImage(file: File) {
-  const data = new FormData();
-  data.append('file', file);
-
   const response = await fetch('/api/admin/upload-image', {
     method: 'POST',
-    body: data,
+    headers: { 'Content-Type': file.type },
+    body: file,
   });
 
   if (!response.ok) {

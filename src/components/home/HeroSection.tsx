@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { BrushButton } from "./BrushButton";
 import { type Links } from "./SocialLinks";
 
 type HeroSectionProps = {
@@ -24,7 +25,7 @@ export function HeroSection({ bandName, logoUrl }: HeroSectionProps) {
         sizes="100vw"
         className="object-cover object-center"
       />
-      <div className="absolute inset-0 bg-instinct-bg/40" />
+      <div className="absolute inset-0 bg-instinct-bg/10" />
 
       <div className="relative z-10 flex flex-col items-center gap-6">
         {logoUrl && (
@@ -42,21 +43,9 @@ export function HeroSection({ bandName, logoUrl }: HeroSectionProps) {
           Shadows Whisper My Name
         </p>
 
-        <a
-          href="#notre-ep"
-          className="relative mt-4 inline-flex items-center justify-center"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element -- brush_button.svg n'a pas besoin de l'optimiseur next/image */}
-          <img
-            src="/assets/brush_button.svg"
-            alt=""
-            aria-hidden="true"
-            className="h-auto w-56 sm:w-72 md:w-80"
-          />
-          <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold tracking-widest text-instinct-foreground uppercase sm:text-sm">
-            Nouvel EP dispo
-          </span>
-        </a>
+        <BrushButton href="#notre-ep" size="lg" className="mt-4">
+          Nouvel EP dispo
+        </BrushButton>
       </div>
     </section>
   );
