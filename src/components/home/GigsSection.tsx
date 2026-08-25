@@ -25,6 +25,8 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "passees", label: "Passées" },
 ];
 
+const PAGE_SIZE = 10;
+
 function formatConcertDate(iso: string) {
   const date = new Date(iso);
   return {
@@ -36,6 +38,7 @@ function formatConcertDate(iso: string) {
 
 export function GigsSection({ bandName, concerts, contactEmail }: GigsSectionProps) {
   const [tab, setTab] = useState<Tab>("futures");
+  const [page, setPage] = useState(1);
   // Lu une seule fois au montage plutôt qu'à chaque rendu (Date.now() est
   // impur et ne doit pas être appelé directement dans un useMemo).
   const [now] = useState(() => Date.now());
@@ -54,13 +57,20 @@ export function GigsSection({ bandName, concerts, contactEmail }: GigsSectionPro
   }, [concerts, now]);
 
   const activeList = tab === "futures" ? futures : passees;
+  const totalPages = Math.max(1, Math.ceil(activeList.length / PAGE_SIZE));
+  const paginatedList = activeList.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <section
       id="nos-dates"
       className="relative scroll-mt-20 overflow-hidden bg-instinct-bg px-4 py-20 sm:px-6 lg:px-8"
     >
-      <Image src="/assets/bg-gigs.png" alt="" fill sizes="100vw" className="object-cover object-center" />
+      {/* Fond en CSS répété verticalement (pas next/image fill) : la section a
+          une hauteur variable selon le nombre de dates affichées, et un fill
+          + object-cover étirerait/zoomerait l'image au-delà de sa résolution
+          native dès que la section dépasse la hauteur du fichier source. */}
+      <div className="absolute inset-0 bg-[url('/assets/bg-gigs-phone.png')] bg-[length:100%_auto] bg-repeat-y sm:hidden" />
+      <div className="absolute inset-0 hidden bg-[url('/assets/bg-gigs.png')] bg-[length:100%_auto] bg-repeat-y sm:block" />
       <div className="absolute inset-0 bg-instinct-bg/10" />
 
       <div className="relative mx-auto max-w-4xl">
@@ -86,7 +96,10 @@ export function GigsSection({ bandName, concerts, contactEmail }: GigsSectionPro
             <button
               key={key}
               type="button"
-              onClick={() => setTab(key)}
+              onClick={() => {
+                setTab(key);
+                setPage(1);
+              }}
               aria-pressed={tab === key}
               className={`relative pb-3 text-sm tracking-widest uppercase transition-colors ${
                 tab === key ? "text-instinct-foreground font-bold" : "text-instinct-foreground/60 font-thin hover:text-instinct-foreground/80 cursor-pointer"
@@ -112,7 +125,7 @@ export function GigsSection({ bandName, concerts, contactEmail }: GigsSectionPro
           </p>
         ) : (
           <ul className="divide-y divide-instinct-foreground/10" data-aos="fade-up">
-            {activeList.map((concert) => {
+            {paginatedList.map((concert) => {
               const { day, month, year } = formatConcertDate(concert.date);
               return (
                 <li key={concert.id} className="flex items-center gap-4 py-5 sm:gap-6">
@@ -133,7 +146,7 @@ export function GigsSection({ bandName, concerts, contactEmail }: GigsSectionPro
                     )}
                   </div>
 
-                  {concert.link && (
+                  {tab === "futures" && concert.link && (
                     <BrushButton href={concert.link} target="_blank" rel="noreferrer" size="lg" className="shrink-0">
                       Tickets
                     </BrushButton>
@@ -142,6 +155,26 @@ export function GigsSection({ bandName, concerts, contactEmail }: GigsSectionPro
               );
             })}
           </ul>
+        )}
+
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center gap-3">
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map((pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => setPage(pageNumber)}
+                aria-current={page === pageNumber ? "page" : undefined}
+                className={`text-sm tracking-widest transition-colors ${
+                  page === pageNumber
+                    ? "font-bold text-instinct-purple"
+                    : "text-instinct-foreground/60 hover:text-instinct-foreground/80"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            ))}
+          </div>
         )}
 
         {contactEmail && (

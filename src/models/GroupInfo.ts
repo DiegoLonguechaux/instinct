@@ -20,6 +20,7 @@ export interface IGroupInfo extends Document {
   groupPhotoUrl?: string;
   logoUrl?: string;
   pressKitUrl?: string;
+  latestVideoUrl?: string;
   contactEmail?: string;
   links?: ILinks;
   createdAt: Date;
@@ -66,6 +67,11 @@ const GroupInfoSchema = new mongoose.Schema<IGroupInfo>(
       trim: true,
     },
     pressKitUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    latestVideoUrl: {
       type: String,
       default: '',
       trim: true,

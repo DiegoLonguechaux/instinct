@@ -71,7 +71,7 @@ export default function ConcertsPage() {
       link: concert.link,
     }),
     toPayload: (form) => ({ ...form, date: toIsoDate(form.date) }),
-    sortCompare: (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    sortCompare: (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
     messages: {
       load: 'Erreur lors du chargement des concerts.',
       createSuccess: 'Concert ajouté avec succès.',

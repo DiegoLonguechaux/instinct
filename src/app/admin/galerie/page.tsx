@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useAdminCrud } from '@/hooks/use-admin-crud';
 import { ColumnDef } from '@tanstack/react-table';
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 type GalleryItem = {
   id: string;
@@ -33,6 +33,8 @@ const defaultForm: GalleryForm = {
 
 export default function GaleriePage() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isBulkUploading, setIsBulkUploading] = useState(false);
+  const bulkFileInputRef = useRef<HTMLInputElement>(null);
 
   const crud = useAdminCrud<GalleryItem, GalleryForm>({
     endpoint: '/api/admin/gallery',
@@ -77,6 +79,51 @@ export default function GaleriePage() {
     } finally {
       setIsUploadingImage(false);
     }
+  };
+
+  const handleBulkFilesSelected = async (files: FileList) => {
+    crud.setMessage('');
+    setIsBulkUploading(true);
+
+    const fileArray = Array.from(files);
+
+    // allSettled plutôt que all : l'échec d'un fichier ne doit pas annuler
+    // la création des autres.
+    const results = await Promise.allSettled(
+      fileArray.map(async (file, index) => {
+        const blob = await upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: '/api/admin/upload-image',
+        });
+
+        // Titre non demandé par l'utilisateur pour ce flux : on en génère un
+        // simple, propre à ce lot (photo-01, photo-02, ...) plutôt que de
+        // rendre le titre optionnel côté modèle/API.
+        const title = `photo-${String(index + 1).padStart(2, '0')}`;
+
+        const response = await fetch('/api/admin/gallery', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, description: '', imageUrl: blob.url }),
+        });
+
+        if (!response.ok) {
+          throw new Error('create failed');
+        }
+      })
+    );
+
+    await crud.reload();
+
+    const failedCount = results.filter((result) => result.status === 'rejected').length;
+    const successCount = fileArray.length - failedCount;
+    if (failedCount > 0) {
+      crud.setMessage(`${successCount} photo(s) ajoutée(s), ${failedCount} échec(s).`);
+    } else {
+      crud.setMessage(`${successCount} photo(s) ajoutée(s) avec succès.`);
+    }
+
+    setIsBulkUploading(false);
   };
 
   const { openEditModal, openDeleteModal } = crud;
@@ -137,7 +184,31 @@ export default function GaleriePage() {
     <div className="container mx-auto py-10">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Galerie</h1>
-        <Button onClick={crud.openCreateModal}>Ajouter une photo</Button>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => bulkFileInputRef.current?.click()}
+            disabled={isBulkUploading}
+          >
+            {isBulkUploading ? 'Ajout en cours...' : 'Ajouter plusieurs photos'}
+          </Button>
+          <input
+            ref={bulkFileInputRef}
+            type="file"
+            multiple
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const { files } = e.target;
+              if (files && files.length > 0) {
+                handleBulkFilesSelected(files);
+              }
+              e.target.value = '';
+            }}
+          />
+          <Button onClick={crud.openCreateModal}>Ajouter une photo</Button>
+        </div>
       </div>
 
       {crud.message && <p className="mb-4 text-sm text-slate-600">{crud.message}</p>}

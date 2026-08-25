@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { Dialog } from "radix-ui";
 import { useCallback, useEffect, useState } from "react";
+import { getVideoEmbedUrl } from "@/lib/video-embed";
 
 export type GalleryPhoto = {
   id: string;
@@ -14,6 +15,7 @@ export type GalleryPhoto = {
 
 type GallerySectionProps = {
   photos: GalleryPhoto[];
+  latestVideoUrl?: string;
 };
 
 // Motif répétitif (pas aléatoire, pour un rendu stable entre le serveur et
@@ -24,9 +26,10 @@ function isFeatured(index: number) {
   return positionInGroup === 0 || positionInGroup === 3;
 }
 
-export function GallerySection({ photos }: GallerySectionProps) {
+export function GallerySection({ photos, latestVideoUrl }: GallerySectionProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const isOpen = activeIndex !== null;
+  const videoEmbedUrl = latestVideoUrl ? getVideoEmbedUrl(latestVideoUrl) : null;
 
   const showPrev = useCallback(() => {
     setActiveIndex((current) => (current === null ? null : (current - 1 + photos.length) % photos.length));
@@ -63,7 +66,12 @@ export function GallerySection({ photos }: GallerySectionProps) {
       id="la-galerie"
       className="relative scroll-mt-20 overflow-hidden bg-instinct-bg px-4 py-20 sm:px-6 lg:px-8"
     >
-      <Image src="/assets/bg-gallery.png" alt="" fill sizes="100vw" className="object-cover object-center" />
+      {/* Fond en CSS répété verticalement (pas next/image fill) : la grille a
+          une hauteur variable selon le nombre de photos, et un fill +
+          object-cover étirerait/zoomerait l'image au-delà de sa résolution
+          native dès que la section dépasse la hauteur du fichier source. */}
+      <div className="absolute inset-0 bg-[url('/assets/bg-gallery-phone.png')] bg-[length:100%_auto] bg-repeat-y sm:hidden" />
+      <div className="absolute inset-0 hidden bg-[url('/assets/bg-gallery.png')] bg-[length:100%_auto] bg-repeat-y sm:block" />
       <div className="absolute inset-0 bg-instinct-bg/0" />
 
       <div className="relative mx-auto max-w-6xl">
@@ -107,6 +115,24 @@ export function GallerySection({ photos }: GallerySectionProps) {
                 />
               </button>
             ))}
+          </div>
+        )}
+
+        {videoEmbedUrl && (
+          <div className="mt-16" data-aos="fade-up">
+            <p className="mb-4 text-center text-xs font-bold tracking-widest text-instinct-purple uppercase">
+              Dernière vidéo
+            </p>
+            <div className="mx-auto aspect-video w-full max-w-3xl overflow-hidden">
+              <iframe
+                src={videoEmbedUrl}
+                title="Dernière vidéo"
+                className="h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                loading="lazy"
+              />
+            </div>
           </div>
         )}
       </div>

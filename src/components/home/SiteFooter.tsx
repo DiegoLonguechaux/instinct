@@ -15,8 +15,21 @@ export function SiteFooter({ bandName, logoUrl, links, contactEmail, pressKitUrl
     // "relative" ici : nécessaire pour que l'image de fond en `fill`
     // s'ancre sur cette section plutôt que sur un ancêtre plus large.
     <footer className="relative overflow-hidden bg-instinct-bg px-4 py-16 sm:px-6 lg:px-8">
-      <Image src="/assets/bg-footer.png" alt="" fill sizes="100vw" className="object-cover object-center" />
-      <div className="absolute inset-x-0 top-10 h-40 bg-gradient-to-b from-instinct-bg to-transparent sm:h-72" />
+      <Image
+        src="/assets/bg-footer-phone.png"
+        alt=""
+        fill
+        sizes="100vw"
+        className="object-cover object-center sm:hidden"
+      />
+      <Image
+        src="/assets/bg-footer.png"
+        alt=""
+        fill
+        sizes="100vw"
+        className="hidden object-cover object-center sm:block"
+      />
+      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-instinct-bg to-transparent sm:h-72" />
 
       <div className="relative mx-auto max-w-5xl">
         <div className="flex flex-col items-center gap-2 text-center">
@@ -54,7 +67,7 @@ export function SiteFooter({ bandName, logoUrl, links, contactEmail, pressKitUrl
           {pressKitUrl && (
             <div>
               <h3 className="text-sm font-semibold tracking-widest text-instinct-foreground uppercase">
-                notre kit press
+                notre kit pro
               </h3>
               <BrushButton href={pressKitUrl} target="_blank" rel="noreferrer" size="md" className="mt-4">
                 télécharger

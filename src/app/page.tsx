@@ -9,6 +9,7 @@ import { SectionDivider } from "@/components/home/SectionDivider";
 import { SiteFooter } from "@/components/home/SiteFooter";
 import { SiteHeader } from "@/components/home/SiteHeader";
 import dbConnect from "@/lib/db";
+import { shuffle } from "@/lib/utils";
 import ConcertModel from "@/models/Concert";
 import GalleryItemModel from "@/models/GalleryItem";
 import GroupInfoModel from "@/models/GroupInfo";
@@ -40,6 +41,7 @@ export default async function Home() {
         groupPhotoUrl: groupInfoDoc.groupPhotoUrl ?? "",
         logoUrl: groupInfoDoc.logoUrl ?? "",
         pressKitUrl: groupInfoDoc.pressKitUrl ?? "",
+        latestVideoUrl: groupInfoDoc.latestVideoUrl ?? "",
         contactEmail: groupInfoDoc.contactEmail ?? "",
         links: groupInfoDoc.links ?? {},
       }
@@ -74,13 +76,18 @@ export default async function Home() {
   }));
 
   // GallerySection est un Client Component (lightbox) : mêmes contraintes de
-  // sérialisation que pour GigsSection.
-  const galleryPhotos = galleryDocs.map((photo) => ({
-    id: String(photo._id),
-    title: photo.title ?? "",
-    description: photo.description ?? "",
-    imageUrl: photo.imageUrl ?? "",
-  }));
+  // sérialisation que pour GigsSection. Le mélange se fait ici (serveur),
+  // une seule fois, plutôt que dans le composant client : un Math.random()
+  // exécuté pendant le rendu de GallerySection donnerait un ordre différent
+  // entre le rendu serveur et l'hydratation côté client (mismatch React).
+  const galleryPhotos = shuffle(
+    galleryDocs.map((photo) => ({
+      id: String(photo._id),
+      title: photo.title ?? "",
+      description: photo.description ?? "",
+      imageUrl: photo.imageUrl ?? "",
+    }))
+  );
 
   return (
     <>
@@ -130,7 +137,7 @@ export default async function Home() {
 
       <SectionDivider src="/assets/br-5.png" />
 
-      <GallerySection photos={galleryPhotos} />
+      <GallerySection photos={galleryPhotos} latestVideoUrl={groupInfo?.latestVideoUrl} />
 
       <SiteFooter
         bandName={groupInfo?.bandName || "INSTINCT"}

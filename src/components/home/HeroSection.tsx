@@ -18,12 +18,20 @@ export function HeroSection({ bandName, logoUrl }: HeroSectionProps) {
       className="relative flex min-h-screen scroll-mt-20 flex-col items-center justify-center overflow-hidden bg-instinct-bg px-4 pt-24 pb-16 text-center"
     >
       <Image
+        src="/assets/bg-home-phone.png"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center sm:hidden"
+      />
+      <Image
         src="/assets/bg-home.png"
         alt=""
         fill
         priority
         sizes="100vw"
-        className="object-cover object-center"
+        className="hidden object-cover object-center sm:block"
       />
       <div className="absolute inset-0 bg-instinct-bg/10" />
 

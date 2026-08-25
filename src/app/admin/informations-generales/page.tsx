@@ -33,6 +33,7 @@ type GroupInfoForm = {
   groupPhotoUrl: string;
   logoUrl: string;
   pressKitUrl: string;
+  latestVideoUrl: string;
   contactEmail: string;
   links: {
     instagram: string;
@@ -55,6 +56,7 @@ const defaultForm: GroupInfoForm = {
   groupPhotoUrl: '',
   logoUrl: '',
   pressKitUrl: '',
+  latestVideoUrl: '',
   contactEmail: '',
   links: {
     instagram: '',
@@ -511,6 +513,18 @@ export default function InformationsGeneralesPage() {
                 </a>
               </p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="latestVideoUrl">Dernière vidéo</Label>
+            <p className="text-sm text-slate-600">Lien YouTube, Dailymotion ou Vimeo — laisser vide pour ne rien afficher.</p>
+            <Input
+              id="latestVideoUrl"
+              type="url"
+              value={form.latestVideoUrl}
+              onChange={(e) => setForm((prev) => ({ ...prev, latestVideoUrl: e.target.value }))}
+              placeholder="https://www.youtube.com/watch?v=..."
+            />
           </div>
 
           <div className="space-y-4">

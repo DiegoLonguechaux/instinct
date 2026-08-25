@@ -18,7 +18,20 @@ export function MerchSection({ items }: MerchSectionProps) {
       id="le-merch"
       className="relative scroll-mt-20 overflow-hidden bg-instinct-bg px-4 py-20 sm:px-6 lg:px-8"
     >
-      <Image src="/assets/bg-merch.png" alt="" fill sizes="100vw" className="object-cover object-center" />
+      <Image
+        src="/assets/bg-merch-phone.png"
+        alt=""
+        fill
+        sizes="100vw"
+        className="object-cover object-center sm:hidden"
+      />
+      <Image
+        src="/assets/bg-merch.png"
+        alt=""
+        fill
+        sizes="100vw"
+        className="hidden object-cover object-center sm:block"
+      />
       <div className="absolute inset-0 bg-instinct-bg/0" />
 
       <div className="relative mx-auto max-w-6xl">
