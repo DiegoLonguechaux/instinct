@@ -151,7 +151,7 @@ export function GallerySection({ photos, latestVideoUrl }: GallerySectionProps) 
 
             <Dialog.Close
               aria-label="Fermer"
-              className="absolute top-4 right-4 text-instinct-foreground/80 transition-colors hover:text-instinct-foreground"
+              className="absolute top-4 right-4 z-10 text-instinct-foreground/80 transition-colors hover:text-instinct-foreground"
             >
               <X className="size-8" />
             </Dialog.Close>
@@ -161,7 +161,7 @@ export function GallerySection({ photos, latestVideoUrl }: GallerySectionProps) 
                 type="button"
                 onClick={showPrev}
                 aria-label="Photo précédente"
-                className="absolute left-2 text-instinct-foreground/80 transition-colors hover:text-instinct-foreground sm:left-6"
+                className="absolute left-2 z-10 text-instinct-foreground/80 transition-colors hover:text-instinct-foreground sm:left-6"
               >
                 <ChevronLeft className="size-10" />
               </button>
@@ -184,7 +184,7 @@ export function GallerySection({ photos, latestVideoUrl }: GallerySectionProps) 
                 type="button"
                 onClick={showNext}
                 aria-label="Photo suivante"
-                className="absolute right-2 text-instinct-foreground/80 transition-colors hover:text-instinct-foreground sm:right-6"
+                className="absolute right-2 z-10 text-instinct-foreground/80 transition-colors hover:text-instinct-foreground sm:right-6"
               >
                 <ChevronRight className="size-10" />
               </button>
