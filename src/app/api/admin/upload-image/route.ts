@@ -5,7 +5,11 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-const MAX_FILE_SIZE = 25 * 1024 * 1024;
+// 25MB était trop juste pour un kit press (zip contenant photos HD + logos +
+// bio) : l'upload semblait interminable puis échouait avec un 403 renvoyé
+// par Vercel Blob une fois le fichier entièrement transféré (la limite est
+// vérifiée côté serveur Vercel, pas avant l'envoi).
+const MAX_FILE_SIZE = 200 * 1024 * 1024;
 
 const ALLOWED_CONTENT_TYPES = [
   'image/png',
