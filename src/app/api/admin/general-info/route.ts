@@ -22,6 +22,7 @@ type GroupInfoPayload = {
   bio?: string;
   groupPhotoUrl?: string;
   logoUrl?: string;
+  signatureLogoUrl?: string;
   pressKitUrl?: string;
   latestVideoUrl?: string;
   contactEmail?: string;
@@ -50,6 +51,7 @@ function normalizeDoc(doc: GroupInfoPayload | null | undefined) {
     bio: (doc?.bio ?? '').trim(),
     groupPhotoUrl: doc?.groupPhotoUrl ?? '',
     logoUrl: doc?.logoUrl ?? '',
+    signatureLogoUrl: doc?.signatureLogoUrl ?? '',
     pressKitUrl: doc?.pressKitUrl ?? '',
     latestVideoUrl: doc?.latestVideoUrl ?? '',
     contactEmail: doc?.contactEmail ?? '',

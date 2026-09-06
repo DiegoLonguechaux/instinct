@@ -19,6 +19,7 @@ export interface IGroupInfo extends Document {
   bio?: string;
   groupPhotoUrl?: string;
   logoUrl?: string;
+  signatureLogoUrl?: string;
   pressKitUrl?: string;
   latestVideoUrl?: string;
   contactEmail?: string;
@@ -62,6 +63,13 @@ const GroupInfoSchema = new mongoose.Schema<IGroupInfo>(
       trim: true,
     },
     logoUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    // Logo hébergé pour un usage hors site (signature email, etc.) — jamais
+    // affiché sur la vitrine, on ne stocke que l'URL pour pouvoir la copier.
+    signatureLogoUrl: {
       type: String,
       default: '',
       trim: true,

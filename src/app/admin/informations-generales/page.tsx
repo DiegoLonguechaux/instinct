@@ -32,6 +32,7 @@ type GroupInfoForm = {
   bio: string;
   groupPhotoUrl: string;
   logoUrl: string;
+  signatureLogoUrl: string;
   pressKitUrl: string;
   latestVideoUrl: string;
   contactEmail: string;
@@ -55,6 +56,7 @@ const defaultForm: GroupInfoForm = {
   bio: '',
   groupPhotoUrl: '',
   logoUrl: '',
+  signatureLogoUrl: '',
   pressKitUrl: '',
   latestVideoUrl: '',
   contactEmail: '',
@@ -252,10 +254,12 @@ export default function InformationsGeneralesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingSignatureLogo, setIsUploadingSignatureLogo] = useState(false);
   const [isUploadingPressKit, setIsUploadingPressKit] = useState(false);
   const [message, setMessage] = useState<string>('');
   const [groupPhotoPreview, setGroupPhotoPreview] = useState<string>('');
   const [logoPreview, setLogoPreview] = useState<string>('');
+  const [signatureLogoPreview, setSignatureLogoPreview] = useState<string>('');
   const hasInitializedEditor = useRef(false);
 
   const editor = useEditor({
@@ -343,16 +347,19 @@ export default function InformationsGeneralesPage() {
     }
   };
 
-  const uploadImage = async (file: File, imageType: 'group' | 'logo') => {
+  const uploadImage = async (file: File, imageType: 'group' | 'logo' | 'signature') => {
     setMessage('');
     const objectUrl = URL.createObjectURL(file);
 
     if (imageType === 'group') {
       setGroupPhotoPreview(objectUrl);
       setIsUploadingPhoto(true);
-    } else {
+    } else if (imageType === 'logo') {
       setLogoPreview(objectUrl);
       setIsUploadingLogo(true);
+    } else {
+      setSignatureLogoPreview(objectUrl);
+      setIsUploadingSignatureLogo(true);
     }
 
     try {
@@ -364,17 +371,22 @@ export default function InformationsGeneralesPage() {
       if (imageType === 'group') {
         setForm((prev) => ({ ...prev, groupPhotoUrl: blob.url }));
         setGroupPhotoPreview('');
-      } else {
+      } else if (imageType === 'logo') {
         setForm((prev) => ({ ...prev, logoUrl: blob.url }));
         setLogoPreview('');
+      } else {
+        setForm((prev) => ({ ...prev, signatureLogoUrl: blob.url }));
+        setSignatureLogoPreview('');
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Erreur lors de l’upload de l’image.');
     } finally {
       if (imageType === 'group') {
         setIsUploadingPhoto(false);
-      } else {
+      } else if (imageType === 'logo') {
         setIsUploadingLogo(false);
+      } else {
+        setIsUploadingSignatureLogo(false);
       }
     }
   };
@@ -484,6 +496,54 @@ export default function InformationsGeneralesPage() {
                 />
               )}
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label htmlFor="signatureLogo">Logo (signature email)</Label>
+            <p className="text-sm text-slate-600">
+              Non utilisé sur le site vitrine — sert uniquement à récupérer une URL hébergée à coller dans un outil de signature email.
+            </p>
+            <Input
+              id="signatureLogo"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  uploadImage(file, 'signature');
+                }
+              }}
+            />
+            {isUploadingSignatureLogo && <p className="text-sm text-slate-600">Upload en cours...</p>}
+            {(signatureLogoPreview || form.signatureLogoUrl) && (
+              <Image
+                src={signatureLogoPreview || form.signatureLogoUrl}
+                alt="Logo pour signature email"
+                width={220}
+                height={220}
+                className="rounded-md border border-slate-200 object-contain bg-white"
+              />
+            )}
+            {form.signatureLogoUrl && (
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={form.signatureLogoUrl}
+                  onFocus={(e) => e.target.select()}
+                  className="font-mono text-xs"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(form.signatureLogoUrl);
+                    setMessage('URL copiée dans le presse-papiers.');
+                  }}
+                >
+                  Copier
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
