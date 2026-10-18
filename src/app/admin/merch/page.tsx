@@ -24,7 +24,8 @@ type MerchForm = {
   title: string;
   price: string;
   sizes: string[];
-  images: string[];
+  image1: string;
+  image2: string;
 };
 
 const AVAILABLE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
@@ -33,7 +34,8 @@ const defaultForm: MerchForm = {
   title: '',
   price: '',
   sizes: [],
-  images: [],
+  image1: '',
+  image2: '',
 };
 
 function formatPrice(price: number) {
@@ -52,7 +54,9 @@ async function uploadOneImage(file: File) {
 }
 
 export default function MerchPage() {
-  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [isUploadingImage1, setIsUploadingImage1] = useState(false);
+  const [isUploadingImage2, setIsUploadingImage2] = useState(false);
+  const isUploadingImages = isUploadingImage1 || isUploadingImage2;
 
   const crud = useAdminCrud<Merch, MerchForm>({
     endpoint: '/api/admin/merch',
@@ -62,13 +66,14 @@ export default function MerchPage() {
       title: item.title,
       price: String(item.price),
       sizes: item.sizes ?? [],
-      images: item.images ?? [],
+      image1: item.images?.[0] ?? '',
+      image2: item.images?.[1] ?? '',
     }),
     toPayload: (form) => ({
       title: form.title,
       price: Number(form.price),
       sizes: form.sizes,
-      images: form.images,
+      images: [form.image1, form.image2].filter(Boolean),
     }),
     sortCompare: (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     messages: {
@@ -98,27 +103,25 @@ export default function MerchPage() {
     });
   };
 
-  const uploadImages = async (files: FileList) => {
+  const uploadImageToSlot = async (slot: 1 | 2, file: File) => {
     crud.setMessage('');
-    setIsUploadingImages(true);
+    const setUploading = slot === 1 ? setIsUploadingImage1 : setIsUploadingImage2;
+    const field = slot === 1 ? 'image1' : 'image2';
+    setUploading(true);
 
     try {
-      // Les uploads sont indépendants les uns des autres : on les
-      // parallélise plutôt que de les attendre un par un.
-      const uploadedUrls = await Promise.all(Array.from(files).map(uploadOneImage));
-      crud.setForm((prev) => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
+      const url = await uploadOneImage(file);
+      crud.setForm((prev) => ({ ...prev, [field]: url }));
     } catch {
-      crud.setMessage('Erreur lors de l’upload des images.');
+      crud.setMessage('Erreur lors de l’upload de l’image.');
     } finally {
-      setIsUploadingImages(false);
+      setUploading(false);
     }
   };
 
-  const removeImage = (imageUrl: string) => {
-    crud.setForm((prev) => ({
-      ...prev,
-      images: prev.images.filter((url) => url !== imageUrl),
-    }));
+  const removeImageFromSlot = (slot: 1 | 2) => {
+    const field = slot === 1 ? 'image1' : 'image2';
+    crud.setForm((prev) => ({ ...prev, [field]: '' }));
   };
 
   const { openEditModal, openDeleteModal } = crud;
@@ -235,45 +238,81 @@ export default function MerchPage() {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <Label htmlFor="images">Images</Label>
-            <Input
-              id="images"
-              type="file"
-              multiple
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  uploadImages(e.target.files);
-                }
-              }}
-            />
-            {isUploadingImages && <p className="text-sm text-slate-600">Upload en cours...</p>}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-3">
+              <Label htmlFor="image1">Photo 1 (par défaut)</Label>
+              <Input
+                id="image1"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    uploadImageToSlot(1, file);
+                  }
+                }}
+              />
+              {isUploadingImage1 && <p className="text-sm text-slate-600">Upload en cours...</p>}
 
-            {crud.form.images.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                {crud.form.images.map((imageUrl) => (
-                  <div key={imageUrl} className="space-y-2">
-                    <Image
-                      src={imageUrl}
-                      alt="Image article"
-                      width={160}
-                      height={160}
-                      className="h-28 w-full rounded-md border border-slate-200 object-cover"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => removeImage(imageUrl)}
-                    >
-                      Retirer
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+              {crud.form.image1 && (
+                <div className="space-y-2">
+                  <Image
+                    src={crud.form.image1}
+                    alt="Photo 1 de l’article"
+                    width={160}
+                    height={160}
+                    className="h-28 w-full rounded-md border border-slate-200 object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => removeImageFromSlot(1)}
+                  >
+                    Retirer
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <Label htmlFor="image2">Photo 2 (au survol)</Label>
+              <p className="text-sm text-slate-600">Optionnelle. Affichée au survol de la carte sur le site.</p>
+              <Input
+                id="image2"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    uploadImageToSlot(2, file);
+                  }
+                }}
+              />
+              {isUploadingImage2 && <p className="text-sm text-slate-600">Upload en cours...</p>}
+
+              {crud.form.image2 && (
+                <div className="space-y-2">
+                  <Image
+                    src={crud.form.image2}
+                    alt="Photo 2 de l’article"
+                    width={160}
+                    height={160}
+                    className="h-28 w-full rounded-md border border-slate-200 object-cover"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => removeImageFromSlot(2)}
+                  >
+                    Retirer
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">

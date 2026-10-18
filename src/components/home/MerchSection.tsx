@@ -60,12 +60,14 @@ export function MerchSection({ items }: MerchSectionProps) {
           <div className="flex flex-wrap justify-center gap-10" data-aos="fade-up">
             {items.map((item) => {
               const cover = item.images[0];
+              const hoverImage = item.images[1];
               return (
                 <div key={item.id} className="w-full max-w-xs">
                   {cover && (
                     // "relative" : la photo est en `fill`, elle a besoin de ce
-                    // conteneur pour se dimensionner.
-                    <div className="relative aspect-4/5 w-full overflow-hidden">
+                    // conteneur pour se dimensionner. "group" : active le
+                    // group-hover de la photo 2 ci-dessous.
+                    <div className="group relative aspect-4/5 w-full overflow-hidden">
                       <Image
                         src={cover}
                         alt={item.title}
@@ -73,6 +75,18 @@ export function MerchSection({ items }: MerchSectionProps) {
                         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 90vw"
                         className="object-cover"
                       />
+                      {hoverImage && (
+                        // Calque superposé qui apparaît en fondu au survol :
+                        // alt="" car c'est juste une autre vue du même produit,
+                        // déjà décrit par l'image 1 ci-dessus.
+                        <Image
+                          src={hoverImage}
+                          alt=""
+                          fill
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 90vw"
+                          className="object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                        />
+                      )}
                     </div>
                   )}
                 </div>
