@@ -75,6 +75,12 @@ export function SiteFooter({ bandName, logoUrl, links, contactEmail, pressKitUrl
             </div>
           )}
         </div>
+
+        <nav aria-label="Informations légales" className="mt-16 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs tracking-widest text-instinct-foreground/60 uppercase">
+          <a href="/cgv" className="hover:text-instinct-purple">CGV</a>
+          <a href="/mentions-legales" className="hover:text-instinct-purple">Mentions légales</a>
+          <a href="/confidentialite" className="hover:text-instinct-purple">Confidentialité</a>
+        </nav>
       </div>
     </footer>
   );

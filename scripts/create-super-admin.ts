@@ -20,6 +20,8 @@ config({ path: path.resolve(process.cwd(), '.env') });
 
 import bcrypt from 'bcryptjs';
 import mongoose from 'mongoose';
+import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from '../src/lib/auth-config';
+import TrustedDeviceModel from '../src/models/TrustedDevice';
 import UserModel from '../src/models/User';
 
 function parseArgs() {
@@ -55,8 +57,8 @@ async function main() {
     process.exit(1);
   }
 
-  if (password.length < 6) {
-    console.error('Le mot de passe doit contenir au moins 6 caractères.');
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    console.error(`Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.`);
     process.exit(1);
   }
 
@@ -68,7 +70,7 @@ async function main() {
 
   await mongoose.connect(MONGODB_URI);
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
   const existing = await UserModel.findOne({ email });
 
@@ -76,7 +78,10 @@ async function main() {
     existing.firstName = firstName;
     existing.password = hashedPassword;
     existing.role = 'super-admin';
+    // Réinitialiser le compte déconnecte aussi ses sessions ouvertes.
+    existing.tokenVersion = (existing.tokenVersion ?? 0) + 1;
     await existing.save();
+    await TrustedDeviceModel.deleteMany({ user: existing._id });
     console.log(`Utilisateur existant mis à jour en super-admin : ${email}`);
   } else {
     await UserModel.create({

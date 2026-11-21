@@ -125,12 +125,12 @@ export default function ConcertsPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">Concerts</h1>
         <Button onClick={crud.openCreateModal}>Ajouter un concert</Button>
       </div>
 
-      {crud.message && <p className="mb-4 text-sm text-slate-600">{crud.message}</p>}
+      {crud.message && <p className="mb-4 text-sm text-muted-foreground">{crud.message}</p>}
 
       {crud.isLoading ? (
         <p>Chargement...</p>
@@ -171,7 +171,7 @@ export default function ConcertsPage() {
             <Label htmlFor="description">Description</Label>
             <textarea
               id="description"
-              className="min-h-24 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+              className="min-h-24 w-full rounded-md border border-border px-3 py-2 text-sm"
               value={crud.form.description}
               onChange={(e) =>
                 crud.setForm((prev) => ({ ...prev, description: e.target.value }))
@@ -207,7 +207,7 @@ export default function ConcertsPage() {
         onClose={crud.closeDeleteModal}
         maxWidthClass="max-w-md"
       >
-        <p className="mb-6 text-sm text-slate-600">
+        <p className="mb-6 text-sm text-muted-foreground">
           Voulez-vous vraiment supprimer ce concert du {formatDisplayDate(crud.itemToDelete?.date ?? '')} ?
         </p>
 

@@ -9,6 +9,8 @@ import { SectionDivider } from "@/components/home/SectionDivider";
 import { SiteFooter } from "@/components/home/SiteFooter";
 import { SiteHeader } from "@/components/home/SiteHeader";
 import dbConnect from "@/lib/db";
+import { totalStock } from "@/lib/merch";
+import { ensureMerchSlugs } from "@/lib/slug";
 import { shuffle } from "@/lib/utils";
 import ConcertModel from "@/models/Concert";
 import GalleryItemModel from "@/models/GalleryItem";
@@ -25,12 +27,14 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   await dbConnect();
+  await ensureMerchSlugs();
 
   const [groupInfoDoc, concertsDocs, releasesDocs, merchDocs, galleryDocs] = await Promise.all([
     GroupInfoModel.findOne({}).lean(),
     ConcertModel.find({}).sort({ date: 1 }).lean(),
     ReleaseModel.find({}).sort({ createdAt: -1 }).lean(),
-    MerchModel.find({}).sort({ createdAt: -1 }).lean(),
+    // `$ne: false` : les articles créés avant l'ajout du champ restent visibles.
+    MerchModel.find({ visible: { $ne: false } }).sort({ createdAt: -1 }).lean(),
     GalleryItemModel.find({}).sort({ createdAt: -1 }).lean(),
   ]);
 
@@ -71,8 +75,13 @@ export default async function Home() {
 
   const merch = merchDocs.map((item) => ({
     id: String(item._id),
+    slug: item.slug ?? "",
     title: item.title ?? "",
+    price: item.price ?? 0,
     images: item.images ?? [],
+    sellOnline: item.sellOnline === true,
+    inStock:
+      totalStock({ sizes: item.sizes ?? [], stock: item.stock ?? 0, sizeStock: item.sizeStock ?? {} }) > 0,
   }));
 
   // GallerySection est un Client Component (lightbox) : mêmes contraintes de

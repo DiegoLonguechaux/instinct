@@ -1,5 +1,7 @@
 import dbConnect from '@/lib/db';
 import { ensureValidObjectId, requireSuperAdmin } from '@/lib/api-route-helpers';
+import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from '@/lib/auth-config';
+import TrustedDeviceModel from '@/models/TrustedDevice';
 import UserModel from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
@@ -35,9 +37,9 @@ export async function PUT(
     );
   }
 
-  if (password && password.length < 6) {
+  if (password && password.length < MIN_PASSWORD_LENGTH) {
     return NextResponse.json(
-      { error: 'Le mot de passe doit contenir au moins 6 caractères.' },
+      { error: `Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.` },
       { status: 400 }
     );
   }
@@ -86,16 +88,28 @@ export async function PUT(
   };
 
   if (password) {
-    updatePayload.password = await bcrypt.hash(password, 10);
+    updatePayload.password = await bcrypt.hash(password, BCRYPT_ROUNDS);
   }
 
-  const updated = await UserModel.findByIdAndUpdate(id, updatePayload, {
-    new: true,
-    runValidators: true,
-  }).lean();
+  const updated = await UserModel.findByIdAndUpdate(
+    id,
+    {
+      $set: updatePayload,
+      // Changer le mot de passe déconnecte les sessions déjà ouvertes de ce compte.
+      ...(password && { $inc: { tokenVersion: 1 } }),
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  ).lean();
 
   if (!updated) {
     return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
+  }
+
+  if (password) {
+    await TrustedDeviceModel.deleteMany({ user: id });
   }
 
   return NextResponse.json(serializeUser(updated));

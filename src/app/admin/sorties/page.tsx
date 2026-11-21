@@ -1,5 +1,6 @@
 'use client';
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { upload } from '@vercel/blob/client';
 import { AdminModal } from '@/components/admin/admin-modal';
 import { DataTable } from '@/components/admin/data-table';
@@ -164,12 +165,12 @@ export default function SortiesPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">Sorties</h1>
         <Button onClick={crud.openCreateModal}>Ajouter une sortie</Button>
       </div>
 
-      {crud.message && <p className="mb-4 text-sm text-slate-600">{crud.message}</p>}
+      {crud.message && <p className="mb-4 text-sm text-muted-foreground">{crud.message}</p>}
 
       {crud.isLoading ? (
         <p>Chargement...</p>
@@ -187,9 +188,9 @@ export default function SortiesPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
-              <select
+              <NativeSelect
                 id="type"
-                className="h-9 w-full rounded-md border border-slate-200 px-3 text-sm"
+                className="w-full"
                 value={crud.form.type}
                 onChange={(e) =>
                   crud.setForm((prev) => ({ ...prev, type: e.target.value as ReleaseType }))
@@ -198,7 +199,7 @@ export default function SortiesPage() {
                 <option value="single">Single</option>
                 <option value="ep">EP</option>
                 <option value="album">Album</option>
-              </select>
+              </NativeSelect>
             </div>
 
             <div className="space-y-2">
@@ -226,14 +227,14 @@ export default function SortiesPage() {
                 }
               }}
             />
-            {isUploadingCover && <p className="text-sm text-slate-600">Upload en cours...</p>}
+            {isUploadingCover && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
             {crud.form.coverUrl && (
               <Image
                 src={crud.form.coverUrl}
                 alt="Pochette"
                 width={180}
                 height={180}
-                className="rounded-md border border-slate-200 object-cover"
+                className="rounded-md border border-border object-cover"
               />
             )}
           </div>
@@ -282,7 +283,7 @@ export default function SortiesPage() {
         onClose={crud.closeDeleteModal}
         maxWidthClass="max-w-md"
       >
-        <p className="mb-6 text-sm text-slate-600">
+        <p className="mb-6 text-sm text-muted-foreground">
           Voulez-vous vraiment supprimer la sortie {crud.itemToDelete?.name ?? ''} ?
         </p>
 

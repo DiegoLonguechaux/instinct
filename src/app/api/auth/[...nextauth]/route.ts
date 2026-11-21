@@ -1,7 +1,8 @@
+import { SESSION_MAX_AGE_SECONDS } from "@/lib/auth-config";
+import { verifyLoginChallenge } from "@/lib/auth-challenge";
 import dbConnect from "@/lib/db";
 import UserModels from "@/models/User";
-import bcrypt from "bcryptjs";
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthOptions, Session } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 // Durée max pendant laquelle un rôle mis en cache dans le JWT peut rester
@@ -10,41 +11,36 @@ const ROLE_REFRESH_INTERVAL_MS = 60 * 1000;
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    // Double authentification : ce provider n'accepte PAS le mot de passe.
+    // Le mot de passe est vérifié par POST /api/auth/login/start, qui envoie
+    // un code par mail ; la session n'existe qu'une fois ce code validé ici.
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "votre@email.com" },
-        password: { label: "Mot de passe", type: "password" }
+        challengeId: { label: "Défi", type: "text" },
+        code: { label: "Code", type: "text" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        const email = credentials.email.trim().toLowerCase();
-
-        await dbConnect();
+        if (!credentials?.challengeId || !credentials?.code) return null;
 
         try {
-          const user = await UserModels.findOne({ email });
+          const user = await verifyLoginChallenge(credentials.challengeId, credentials.code.trim());
 
           if (!user) {
             return null;
           }
-
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-
-          if (!isPasswordValid) return null;
 
           return {
             id: user._id.toString(),
             email: user.email,
             name: user.firstName,
             role: user.role,
+            tokenVersion: user.tokenVersion ?? 0,
           };
         } catch (error) {
           // Une erreur ici (ex. Mongo injoignable) est une vraie panne, pas
           // des identifiants invalides : on la journalise et on la
-          // propage plutôt que de la faire passer pour un mauvais mot de
-          // passe.
+          // propage plutôt que de la faire passer pour un mauvais code.
           console.error("Auth error:", error);
           throw error;
         }
@@ -57,7 +53,12 @@ export const authOptions: NextAuthOptions = {
             // Connexion : on part des infos fraîchement lues en base.
             token.role = user.role;
             token.id = user.id;
+            token.tokenVersion = user.tokenVersion;
             token.roleCheckedAt = Date.now();
+            return token;
+        }
+
+        if (token.invalid) {
             return token;
         }
 
@@ -70,10 +71,18 @@ export const authOptions: NextAuthOptions = {
         if (token.id && Date.now() - lastChecked > ROLE_REFRESH_INTERVAL_MS) {
             try {
                 await dbConnect();
-                const dbUser = await UserModels.findById(token.id).select("role").lean<{ role: string } | null>();
-                if (dbUser?.role) {
-                    token.role = dbUser.role;
+                const dbUser = await UserModels.findById(token.id)
+                    .select("role tokenVersion")
+                    .lean<{ role: string; tokenVersion?: number } | null>();
+
+                // Compte supprimé, ou mot de passe changé/réinitialisé depuis
+                // l'émission du token : la session n'est plus valable.
+                if (!dbUser || (dbUser.tokenVersion ?? 0) !== (token.tokenVersion ?? 0)) {
+                    token.invalid = true;
+                    return token;
                 }
+
+                token.role = dbUser.role;
                 token.roleCheckedAt = Date.now();
             } catch (error) {
                 console.error("JWT role refresh error:", error);
@@ -85,6 +94,11 @@ export const authOptions: NextAuthOptions = {
         return token;
     },
     async session({ session, token }) {
+        if (token.invalid) {
+            // Sans `user`, getServerSession() est considérée comme non
+            // connectée : requireSession() répond 401.
+            return { expires: session.expires } as Session;
+        }
         if (session.user) {
             session.user.role = token.role;
             session.user.id = token.id;
@@ -98,6 +112,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
+    maxAge: SESSION_MAX_AGE_SECONDS,
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

@@ -19,17 +19,17 @@ export function getVideoEmbedUrl(url: string): string | null {
   if (host === "youtube.com" || host === "m.youtube.com") {
     if (parsed.pathname === "/watch") {
       const id = parsed.searchParams.get("v");
-      if (id) return `https://www.youtube.com/embed/${id}`;
+      if (id) return `https://www.youtube-nocookie.com/embed/${id}`;
     }
     const shortsMatch = parsed.pathname.match(/^\/shorts\/([\w-]+)/);
-    if (shortsMatch) return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+    if (shortsMatch) return `https://www.youtube-nocookie.com/embed/${shortsMatch[1]}`;
     const embedMatch = parsed.pathname.match(/^\/embed\/([\w-]+)/);
-    if (embedMatch) return url;
+    if (embedMatch) return `https://www.youtube-nocookie.com/embed/${embedMatch[1]}`;
     return null;
   }
   if (host === "youtu.be") {
     const id = parsed.pathname.slice(1);
-    return id ? `https://www.youtube.com/embed/${id}` : null;
+    return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
   }
 
   // Vimeo

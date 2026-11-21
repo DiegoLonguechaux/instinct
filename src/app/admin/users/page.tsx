@@ -1,5 +1,6 @@
 'use client';
 
+import { NativeSelect } from "@/components/ui/native-select";
 import { AdminModal } from '@/components/admin/admin-modal';
 import { DataTable } from '@/components/admin/data-table';
 import { Button } from '@/components/ui/button';
@@ -78,7 +79,7 @@ export default function UsersPage() {
         accessorKey: 'role',
         header: 'Rôle',
         cell: ({ row }) => (
-          <span className={`font-medium ${row.original.role === 'super-admin' ? 'text-purple-600' : 'text-blue-600'}`}>
+          <span className={`font-medium ${row.original.role === 'super-admin' ? 'text-purple-400' : 'text-blue-400'}`}>
             {row.original.role}
           </span>
         ),
@@ -108,12 +109,12 @@ export default function UsersPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">Utilisateurs</h1>
         <Button onClick={crud.openCreateModal}>Ajouter un utilisateur</Button>
       </div>
 
-      {crud.message && <p className="mb-4 text-sm text-slate-600">{crud.message}</p>}
+      {crud.message && <p className="mb-4 text-sm text-muted-foreground">{crud.message}</p>}
 
       {crud.isLoading ? (
         <p>Chargement...</p>
@@ -151,15 +152,15 @@ export default function UsersPage() {
 
           <div className="space-y-2">
             <Label htmlFor="role">Rôle</Label>
-            <select
+            <NativeSelect
               id="role"
-              className="h-9 w-full rounded-md border border-slate-200 px-3 text-sm"
+              className="w-full"
               value={crud.form.role}
               onChange={(e) => crud.setForm((prev) => ({ ...prev, role: e.target.value as UserRole }))}
             >
               <option value="admin">admin</option>
               <option value="super-admin">super-admin</option>
-            </select>
+            </NativeSelect>
           </div>
 
           <div className="space-y-2">
@@ -193,7 +194,7 @@ export default function UsersPage() {
         onClose={crud.closeDeleteModal}
         maxWidthClass="max-w-md"
       >
-        <p className="mb-6 text-sm text-slate-600">
+        <p className="mb-6 text-sm text-muted-foreground">
           Voulez-vous vraiment supprimer l’utilisateur {crud.itemToDelete?.firstName ?? ''} ?
         </p>
 

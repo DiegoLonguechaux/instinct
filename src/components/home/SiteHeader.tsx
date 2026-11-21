@@ -1,6 +1,7 @@
 "use client";
 
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { CartButton } from "@/components/shop/CartButton";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import Image from "next/image";
@@ -23,12 +24,15 @@ type SiteHeaderProps = {
   logoUrl?: string;
   links?: Links;
   contactEmail?: string;
+  /** Faux sur les autres pages (fiche produit, panier...) : les ancres pointent alors vers la one-page. */
+  onHome?: boolean;
 };
 
-export function SiteHeader({ bandName, logoUrl, links, contactEmail }: SiteHeaderProps) {
+export function SiteHeader({ bandName, logoUrl, links, contactEmail, onHome = true }: SiteHeaderProps) {
   const [open, setOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeHref, setActiveHref] = useState(NAV_ITEMS[0].href);
+  const anchorPrefix = onHome ? "" : "/";
 
   // Fond du header : transparent tout en haut, opaque + flouté dès qu'on
   // scrolle un peu.
@@ -42,6 +46,10 @@ export function SiteHeader({ bandName, logoUrl, links, contactEmail }: SiteHeade
   // Section active : on observe chaque section ancrée et on retient celle
   // qui occupe le centre de l'écran, pour surligner le lien correspondant.
   useEffect(() => {
+    if (!onHome) {
+      return;
+    }
+
     const sectionIds = NAV_ITEMS.map((item) => item.href.slice(1));
     const sections = sectionIds
       .map((id) => document.getElementById(id))
@@ -73,7 +81,7 @@ export function SiteHeader({ bandName, logoUrl, links, contactEmail }: SiteHeade
 
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
-  }, []);
+  }, [onHome]);
 
   return (
     <header
@@ -83,7 +91,7 @@ export function SiteHeader({ bandName, logoUrl, links, contactEmail }: SiteHeade
       )}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <a href="#accueil" className="shrink-0">
+        <a href={`${anchorPrefix}#accueil`} className="shrink-0">
           {logoUrl ? (
             <Image
               src={logoUrl}
@@ -102,10 +110,10 @@ export function SiteHeader({ bandName, logoUrl, links, contactEmail }: SiteHeade
           {NAV_ITEMS.map((item) => (
             <a
               key={item.href}
-              href={item.href}
+              href={`${anchorPrefix}${item.href}`}
               className={cn(
                 "text-sm font-semibold tracking-widest uppercase transition-colors",
-                activeHref === item.href
+                onHome && activeHref === item.href
                   ? "text-instinct-purple"
                   : "text-instinct-foreground hover:text-instinct-purple"
               )}
@@ -115,13 +123,17 @@ export function SiteHeader({ bandName, logoUrl, links, contactEmail }: SiteHeade
           ))}
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-6 md:flex">
           <SocialLinks links={links} contactEmail={contactEmail} only={HEADER_SOCIAL_KEYS} size="md" />
+          <CartButton />
         </div>
+
+        <div className="flex items-center gap-5 md:hidden">
+          <CartButton />
 
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
-            className="text-instinct-foreground md:hidden"
+            className="text-instinct-foreground"
             aria-label="Ouvrir le menu"
           >
             <Menu className="size-6" />
@@ -135,11 +147,11 @@ export function SiteHeader({ bandName, logoUrl, links, contactEmail }: SiteHeade
               {NAV_ITEMS.map((item) => (
                 <a
                   key={item.href}
-                  href={item.href}
+                  href={`${anchorPrefix}${item.href}`}
                   onClick={() => setOpen(false)}
                   className={cn(
                     "text-lg font-semibold tracking-widest uppercase transition-colors",
-                    activeHref === item.href ? "text-instinct-purple" : undefined
+                    onHome && activeHref === item.href ? "text-instinct-purple" : undefined
                   )}
                 >
                   {item.label}
@@ -151,6 +163,7 @@ export function SiteHeader({ bandName, logoUrl, links, contactEmail }: SiteHeade
             </div>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
     </header>
   );

@@ -139,7 +139,7 @@ export default function GaleriePage() {
             alt={row.original.title}
             width={72}
             height={72}
-            className="h-14 w-14 rounded-md border border-slate-200 object-cover"
+            className="h-14 w-14 rounded-md border border-border object-cover"
           />
         ),
       },
@@ -182,7 +182,7 @@ export default function GaleriePage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">Galerie</h1>
         <div className="flex gap-2">
           <Button
@@ -211,7 +211,7 @@ export default function GaleriePage() {
         </div>
       </div>
 
-      {crud.message && <p className="mb-4 text-sm text-slate-600">{crud.message}</p>}
+      {crud.message && <p className="mb-4 text-sm text-muted-foreground">{crud.message}</p>}
 
       {crud.isLoading ? (
         <p>Chargement...</p>
@@ -241,7 +241,7 @@ export default function GaleriePage() {
             <Label htmlFor="description">Description</Label>
             <textarea
               id="description"
-              className="min-h-24 w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+              className="min-h-24 w-full rounded-md border border-border px-3 py-2 text-sm"
               value={crud.form.description}
               onChange={(e) =>
                 crud.setForm((prev) => ({ ...prev, description: e.target.value }))
@@ -263,7 +263,7 @@ export default function GaleriePage() {
                 }
               }}
             />
-            {isUploadingImage && <p className="text-sm text-slate-600">Upload en cours...</p>}
+            {isUploadingImage && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
 
             {crud.form.imageUrl && (
               <Image
@@ -271,7 +271,7 @@ export default function GaleriePage() {
                 alt="Aperçu photo"
                 width={220}
                 height={220}
-                className="rounded-md border border-slate-200 object-cover"
+                className="rounded-md border border-border object-cover"
               />
             )}
           </div>
@@ -298,7 +298,7 @@ export default function GaleriePage() {
         onClose={crud.closeDeleteModal}
         maxWidthClass="max-w-md"
       >
-        <p className="mb-6 text-sm text-slate-600">
+        <p className="mb-6 text-sm text-muted-foreground">
           Voulez-vous vraiment supprimer la photo {crud.itemToDelete?.title ?? ''} ?
         </p>
 

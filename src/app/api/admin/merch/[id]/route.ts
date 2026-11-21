@@ -2,7 +2,7 @@ import dbConnect from '@/lib/db';
 import { ensureValidObjectId, requireSession } from '@/lib/api-route-helpers';
 import MerchModel from '@/models/Merch';
 import { NextResponse } from 'next/server';
-import { normalizePayload, serializeMerch, type MerchPayload } from '../route';
+import { normalizePayload, serializeMerch, validatePayload, type MerchPayload } from '../route';
 
 export async function PUT(
   request: Request,
@@ -22,22 +22,29 @@ export async function PUT(
   const body = (await request.json()) as MerchPayload;
   const payload = normalizePayload(body);
 
-  if (!payload.title) {
-    return NextResponse.json(
-      { error: 'Le titre est obligatoire.' },
-      { status: 400 }
-    );
-  }
-
-  if (Number.isNaN(payload.price) || payload.price < 0) {
-    return NextResponse.json(
-      { error: 'Le prix doit être un nombre positif.' },
-      { status: 400 }
-    );
+  const validationError = validatePayload(payload);
+  if (validationError) {
+    return NextResponse.json({ error: validationError }, { status: 400 });
   }
 
   await dbConnect();
-  const updated = await MerchModel.findByIdAndUpdate(id, payload, {
+
+  const existing = await MerchModel.findById(id).lean();
+  if (!existing) {
+    return NextResponse.json({ error: 'Article introuvable' }, { status: 404 });
+  }
+
+  // Le stock n'est volontairement pas modifiable ici : une fiche ouverte
+  // pendant qu'une vente est enregistrée écraserait le stock à jour. Il se
+  // gère via /api/admin/merch/stock. On retire seulement celui des tailles
+  // supprimées pour qu'il ne réapparaisse pas si la taille est rajoutée.
+  const removedSizes = (existing.sizes ?? []).filter((size) => !payload.sizes.includes(size));
+  const update: Record<string, unknown> = { $set: payload };
+  if (removedSizes.length > 0) {
+    update.$unset = Object.fromEntries(removedSizes.map((size) => [`sizeStock.${size}`, '']));
+  }
+
+  const updated = await MerchModel.findByIdAndUpdate(id, update, {
     new: true,
     runValidators: true,
   }).lean();

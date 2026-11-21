@@ -94,7 +94,7 @@ function ToolbarIconButton({
       variant="ghost"
       size="icon-sm"
       className={`h-8 w-8 rounded-md border border-transparent p-0 ${
-        active ? 'bg-slate-700 text-white hover:bg-slate-700' : 'text-slate-200 hover:bg-slate-700 hover:text-white'
+        active ? 'bg-accent text-accent-foreground hover:bg-accent' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
       }`}
       onClick={onClick}
       disabled={disabled}
@@ -145,11 +145,11 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border border-slate-700 border-b-0 rounded-t-md p-2 bg-slate-900">
-      <div className="flex items-center gap-2 rounded-md border border-slate-700 px-2 py-1 bg-slate-800">
-        <Heading className="h-4 w-4 text-slate-200" />
+    <div className="flex flex-wrap items-center gap-2 border border-border border-b-0 rounded-t-md p-2 bg-muted">
+      <div className="flex items-center gap-2 rounded-md border border-border px-2 py-1 bg-background">
+        <Heading className="h-4 w-4 text-muted-foreground" />
         <select
-          className="bg-transparent text-sm text-slate-100 outline-none"
+          className="bg-transparent text-sm text-foreground outline-none"
           value={currentHeading}
           onChange={(e) => setHeadingLevel(e.target.value)}
         >
@@ -160,7 +160,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
         </select>
       </div>
 
-      <div className="h-6 w-px bg-slate-700" />
+      <div className="h-6 w-px bg-accent" />
 
       <ToolbarIconButton
         active={editor.isActive('bold')}
@@ -191,7 +191,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
         <Strikethrough className="h-4 w-4" />
       </ToolbarIconButton>
 
-      <div className="h-6 w-px bg-slate-700" />
+      <div className="h-6 w-px bg-accent" />
 
       <ToolbarIconButton
         active={editor.isActive('bulletList')}
@@ -222,7 +222,7 @@ function EditorToolbar({ editor }: { editor: Editor | null }) {
         <Code className="h-4 w-4" />
       </ToolbarIconButton>
 
-      <div className="h-6 w-px bg-slate-700" />
+      <div className="h-6 w-px bg-accent" />
 
       <ToolbarIconButton
         onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
@@ -275,7 +275,7 @@ export default function InformationsGeneralesPage() {
     editorProps: {
       attributes: {
         class:
-          'min-h-48 rounded-b-md border border-slate-200 bg-white p-3 focus:outline-none',
+          'min-h-48 rounded-b-md border border-input bg-background text-foreground p-3 focus:outline-none',
       },
     },
     onUpdate({ editor: currentEditor }) {
@@ -460,14 +460,14 @@ export default function InformationsGeneralesPage() {
                   }
                 }}
               />
-              {isUploadingPhoto && <p className="text-sm text-slate-600">Upload en cours...</p>}
+              {isUploadingPhoto && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
               {(groupPhotoPreview || form.groupPhotoUrl) && (
                 <Image
                   src={groupPhotoPreview || form.groupPhotoUrl}
                   alt="Photo du groupe"
                   width={220}
                   height={220}
-                  className="rounded-md border border-slate-200 object-cover"
+                  className="rounded-md border border-border object-cover"
                 />
               )}
             </div>
@@ -485,14 +485,14 @@ export default function InformationsGeneralesPage() {
                   }
                 }}
               />
-              {isUploadingLogo && <p className="text-sm text-slate-600">Upload en cours...</p>}
+              {isUploadingLogo && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
               {(logoPreview || form.logoUrl) && (
                 <Image
                   src={logoPreview || form.logoUrl}
                   alt="Logo du groupe"
                   width={220}
                   height={220}
-                  className="rounded-md border border-slate-200 object-contain bg-white"
+                  className="rounded-md border border-border object-contain bg-white"
                 />
               )}
             </div>
@@ -500,7 +500,7 @@ export default function InformationsGeneralesPage() {
 
           <div className="space-y-3">
             <Label htmlFor="signatureLogo">Logo (signature email)</Label>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Non utilisé sur le site vitrine — sert uniquement à récupérer une URL hébergée à coller dans un outil de signature email.
             </p>
             <Input
@@ -514,14 +514,14 @@ export default function InformationsGeneralesPage() {
                 }
               }}
             />
-            {isUploadingSignatureLogo && <p className="text-sm text-slate-600">Upload en cours...</p>}
+            {isUploadingSignatureLogo && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
             {(signatureLogoPreview || form.signatureLogoUrl) && (
               <Image
                 src={signatureLogoPreview || form.signatureLogoUrl}
                 alt="Logo pour signature email"
                 width={220}
                 height={220}
-                className="rounded-md border border-slate-200 object-contain bg-white"
+                className="rounded-md border border-border object-contain bg-white"
               />
             )}
             {form.signatureLogoUrl && (
@@ -559,9 +559,9 @@ export default function InformationsGeneralesPage() {
                 }
               }}
             />
-            {isUploadingPressKit && <p className="text-sm text-slate-600">Upload en cours...</p>}
+            {isUploadingPressKit && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
             {form.pressKitUrl && (
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 Fichier actuel :{' '}
                 <a
                   href={form.pressKitUrl}
@@ -577,7 +577,7 @@ export default function InformationsGeneralesPage() {
 
           <div className="space-y-2">
             <Label htmlFor="latestVideoUrl">Dernière vidéo</Label>
-            <p className="text-sm text-slate-600">Lien YouTube, Dailymotion ou Vimeo — laisser vide pour ne rien afficher.</p>
+            <p className="text-sm text-muted-foreground">Lien YouTube, Dailymotion ou Vimeo — laisser vide pour ne rien afficher.</p>
             <Input
               id="latestVideoUrl"
               type="url"
@@ -757,7 +757,7 @@ export default function InformationsGeneralesPage() {
             <Button type="submit" disabled={isSaving}>
               {isSaving ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
-            {message && <p className="text-sm text-slate-600">{message}</p>}
+            {message && <p className="text-sm text-muted-foreground">{message}</p>}
           </div>
         </form>
       </Card>

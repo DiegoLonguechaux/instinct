@@ -1,9 +1,15 @@
+import { formatPrice } from "@/lib/merch";
 import Image from "next/image";
+import Link from "next/link";
 
 export type MerchItem = {
   id: string;
+  slug: string;
   title: string;
+  price: number;
   images: string[];
+  sellOnline: boolean;
+  inStock: boolean;
 };
 
 type MerchSectionProps = {
@@ -62,12 +68,17 @@ export function MerchSection({ items }: MerchSectionProps) {
               const cover = item.images[0];
               const hoverImage = item.images[1];
               return (
-                <div key={item.id} className="w-full max-w-xs">
+                <Link
+                  key={item.id}
+                  href={`/merch/${item.slug}`}
+                  className="group block w-full max-w-xs"
+                  aria-label={`${item.title}, ${formatPrice(item.price)}`}
+                >
                   {cover && (
                     // "relative" : la photo est en `fill`, elle a besoin de ce
                     // conteneur pour se dimensionner. "group" : active le
                     // group-hover de la photo 2 ci-dessous.
-                    <div className="group relative aspect-4/5 w-full overflow-hidden">
+                    <div className="relative aspect-4/5 w-full overflow-hidden">
                       <Image
                         src={cover}
                         alt={item.title}
@@ -89,7 +100,15 @@ export function MerchSection({ items }: MerchSectionProps) {
                       )}
                     </div>
                   )}
-                </div>
+                  <div className="mt-3 flex items-baseline justify-between gap-3">
+                    <span className="truncate text-sm font-semibold tracking-widest text-instinct-foreground uppercase group-hover:text-instinct-purple">
+                      {item.title}
+                    </span>
+                    <span className="shrink-0 text-sm text-instinct-foreground/80 tabular-nums">
+                      {item.inStock ? formatPrice(item.price) : "Épuisé"}
+                    </span>
+                  </div>
+                </Link>
               );
             })}
           </div>
@@ -98,9 +117,19 @@ export function MerchSection({ items }: MerchSectionProps) {
         <div className="mt-16 text-center">
           <p className="text-xs font-bold tracking-widest text-instinct-purple uppercase">Attention</p>
           <p className="mt-2 text-sm font-thin text-instinct-foreground">
-            Le merch est vendu <strong className="font-bold text-instinct-foreground">uniquement</strong>
-            <br />
-            lors de nos concerts
+            {items.some((item) => item.sellOnline) ? (
+              <>
+                Le merch est disponible en ligne
+                <br />
+                et lors de nos concerts
+              </>
+            ) : (
+              <>
+                Le merch est vendu <strong className="font-bold text-instinct-foreground">uniquement</strong>
+                <br />
+                lors de nos concerts
+              </>
+            )}
           </p>
         </div>
       </div>

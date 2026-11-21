@@ -1,4 +1,5 @@
 import AuthProvider from "@/components/auth/AuthProvider";
+import { CartProvider } from "@/components/shop/CartProvider";
 import type { Metadata } from "next";
 import { Instrument_Serif, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
@@ -31,7 +32,7 @@ export default function RootLayout({
         className={`${instrumentSerif.variable} ${robotoCondensed.variable} antialiased`}
       >
         <AuthProvider>
-          {children}
+          <CartProvider>{children}</CartProvider>
         </AuthProvider>
       </body>
     </html>

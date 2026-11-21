@@ -1,29 +1,30 @@
 'use client';
 
-import { upload } from '@vercel/blob/client';
 import { AdminModal } from '@/components/admin/admin-modal';
 import { DataTable } from '@/components/admin/data-table';
+import { MerchNav } from '@/components/admin/merch-nav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAdminCrud } from '@/hooks/use-admin-crud';
+import { formatPrice, LOW_STOCK_THRESHOLD, type MerchItem as Merch } from '@/lib/merch';
 import { ColumnDef } from '@tanstack/react-table';
+import { upload } from '@vercel/blob/client';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
-
-type Merch = {
-  id: string;
-  title: string;
-  price: number;
-  sizes: string[];
-  images: string[];
-  createdAt: string;
-};
 
 type MerchForm = {
   title: string;
   price: string;
+  costPrice: string;
+  description: string;
+  weightGrams: string;
+  sellOnline: boolean;
   sizes: string[];
+  visible: boolean;
+  // Stock initial : utilisé uniquement à la création.
+  stock: string;
+  sizeStock: Record<string, string>;
   image1: string;
   image2: string;
 };
@@ -33,17 +34,17 @@ const AVAILABLE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const defaultForm: MerchForm = {
   title: '',
   price: '',
+  costPrice: '',
+  description: '',
+  weightGrams: '',
+  sellOnline: false,
   sizes: [],
+  visible: true,
+  stock: '',
+  sizeStock: {},
   image1: '',
   image2: '',
 };
-
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(price);
-}
 
 async function uploadOneImage(file: File) {
   const blob = await upload(file.name, file, {
@@ -65,14 +66,30 @@ export default function MerchPage() {
     toForm: (item) => ({
       title: item.title,
       price: String(item.price),
+      costPrice: item.costPrice ? String(item.costPrice) : '',
+      description: item.description ?? '',
+      weightGrams: item.weightGrams ? String(item.weightGrams) : '',
+      sellOnline: item.sellOnline,
       sizes: item.sizes ?? [],
+      visible: item.visible,
+      stock: '',
+      sizeStock: {},
       image1: item.images?.[0] ?? '',
       image2: item.images?.[1] ?? '',
     }),
     toPayload: (form) => ({
       title: form.title,
       price: Number(form.price),
+      costPrice: Number(form.costPrice || 0),
+      description: form.description,
+      weightGrams: Number(form.weightGrams || 0),
+      sellOnline: form.sellOnline,
       sizes: form.sizes,
+      visible: form.visible,
+      stock: Number(form.stock || 0),
+      sizeStock: Object.fromEntries(
+        form.sizes.map((size) => [size, Number(form.sizeStock[size] || 0)])
+      ),
       images: [form.image1, form.image2].filter(Boolean),
     }),
     sortCompare: (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -143,6 +160,36 @@ export default function MerchPage() {
         cell: ({ row }) => (row.original.sizes.length > 0 ? row.original.sizes.join(', ') : '-'),
       },
       {
+        accessorKey: 'totalStock',
+        header: 'Stock',
+        cell: ({ row }) => {
+          const { totalStock } = row.original;
+          return (
+            <span
+              className={
+                totalStock === 0
+                  ? 'font-semibold text-red-400'
+                  : totalStock <= LOW_STOCK_THRESHOLD
+                    ? 'font-semibold text-amber-400'
+                    : ''
+              }
+            >
+              {totalStock}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'visible',
+        header: 'Site vitrine',
+        cell: ({ row }) => (row.original.visible ? 'Visible' : 'Masqué'),
+      },
+      {
+        accessorKey: 'sellOnline',
+        header: 'En ligne',
+        cell: ({ row }) => (row.original.sellOnline ? 'Oui' : 'Non'),
+      },
+      {
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => (
@@ -171,13 +218,18 @@ export default function MerchPage() {
   );
 
   return (
-    <div className="container mx-auto py-10">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Merch</h1>
+    <div className="container mx-auto px-4 py-10">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold">Merch - Produits</h1>
+      </div>
+
+      <MerchNav />
+
+      <div className="mb-6 flex items-center justify-end gap-2">
         <Button onClick={crud.openCreateModal}>Ajouter un article</Button>
       </div>
 
-      {crud.message && <p className="mb-4 text-sm text-slate-600">{crud.message}</p>}
+      {crud.message && <p className="mb-4 text-sm text-muted-foreground">{crud.message}</p>}
 
       {crud.isLoading ? (
         <p>Chargement...</p>
@@ -219,13 +271,76 @@ export default function MerchPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="costPrice">Prix de revient (optionnel)</Label>
+              <Input
+                id="costPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                value={crud.form.costPrice}
+                onChange={(e) => crud.setForm((prev) => ({ ...prev, costPrice: e.target.value }))}
+                placeholder="0.00"
+              />
+              <p className="text-xs text-muted-foreground">Sert à calculer le bénéfice dans les statistiques.</p>
+            </div>
+
+            <label className="flex items-center gap-3 self-start rounded-md border border-border px-3 py-3 text-sm md:mt-6">
+              <input
+                type="checkbox"
+                checked={crud.form.visible}
+                onChange={(e) => crud.setForm((prev) => ({ ...prev, visible: e.target.checked }))}
+              />
+              <span>Afficher sur le site vitrine</span>
+            </label>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description (fiche produit)</Label>
+            <textarea
+              id="description"
+              rows={4}
+              value={crud.form.description}
+              onChange={(e) => crud.setForm((prev) => ({ ...prev, description: e.target.value }))}
+              placeholder="Matière, coupe, détails..."
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="weightGrams">Poids (grammes)</Label>
+              <Input
+                id="weightGrams"
+                type="number"
+                min="0"
+                step="1"
+                inputMode="numeric"
+                value={crud.form.weightGrams}
+                onChange={(e) => crud.setForm((prev) => ({ ...prev, weightGrams: e.target.value }))}
+                placeholder="ex. 250"
+              />
+              <p className="text-xs text-muted-foreground">Sert à calculer les frais de port.</p>
+            </div>
+
+            <label className="flex items-center gap-3 self-start rounded-md border border-border px-3 py-3 text-sm md:mt-6">
+              <input
+                type="checkbox"
+                checked={crud.form.sellOnline}
+                onChange={(e) => crud.setForm((prev) => ({ ...prev, sellOnline: e.target.checked }))}
+              />
+              <span>Vendre en ligne (panier et paiement)</span>
+            </label>
+          </div>
+
           <div className="space-y-2">
             <Label>Tailles disponibles</Label>
             <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
               {AVAILABLE_SIZES.map((size) => (
                 <label
                   key={size}
-                  className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm"
+                  className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm"
                 >
                   <input
                     type="checkbox"
@@ -237,6 +352,51 @@ export default function MerchPage() {
               ))}
             </div>
           </div>
+
+          {crud.isEditMode ? (
+            <p className="text-sm text-muted-foreground">
+              Le stock se gère dans l’onglet « Stock » (réassort, inventaire).
+            </p>
+          ) : crud.form.sizes.length === 0 ? (
+            <div className="max-w-40 space-y-2">
+              <Label htmlFor="stock">Stock initial</Label>
+              <Input
+                id="stock"
+                type="number"
+                min="0"
+                step="1"
+                inputMode="numeric"
+                value={crud.form.stock}
+                onChange={(e) => crud.setForm((prev) => ({ ...prev, stock: e.target.value }))}
+                placeholder="0"
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>Stock initial par taille</Label>
+              <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
+                {crud.form.sizes.map((size) => (
+                  <div key={size} className="space-y-1">
+                    <span className="text-xs font-medium text-muted-foreground">{size}</span>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                      value={crud.form.sizeStock[size] ?? ''}
+                      onChange={(e) =>
+                        crud.setForm((prev) => ({
+                          ...prev,
+                          sizeStock: { ...prev.sizeStock, [size]: e.target.value },
+                        }))
+                      }
+                      placeholder="0"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-3">
@@ -252,7 +412,7 @@ export default function MerchPage() {
                   }
                 }}
               />
-              {isUploadingImage1 && <p className="text-sm text-slate-600">Upload en cours...</p>}
+              {isUploadingImage1 && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
 
               {crud.form.image1 && (
                 <div className="space-y-2">
@@ -261,7 +421,7 @@ export default function MerchPage() {
                     alt="Photo 1 de l’article"
                     width={160}
                     height={160}
-                    className="h-28 w-full rounded-md border border-slate-200 object-cover"
+                    className="h-28 w-full rounded-md border border-border object-cover"
                   />
                   <Button
                     type="button"
@@ -278,7 +438,7 @@ export default function MerchPage() {
 
             <div className="space-y-3">
               <Label htmlFor="image2">Photo 2 (au survol)</Label>
-              <p className="text-sm text-slate-600">Optionnelle. Affichée au survol de la carte sur le site.</p>
+              <p className="text-sm text-muted-foreground">Optionnelle. Affichée au survol de la carte sur le site.</p>
               <Input
                 id="image2"
                 type="file"
@@ -290,7 +450,7 @@ export default function MerchPage() {
                   }
                 }}
               />
-              {isUploadingImage2 && <p className="text-sm text-slate-600">Upload en cours...</p>}
+              {isUploadingImage2 && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
 
               {crud.form.image2 && (
                 <div className="space-y-2">
@@ -299,7 +459,7 @@ export default function MerchPage() {
                     alt="Photo 2 de l’article"
                     width={160}
                     height={160}
-                    className="h-28 w-full rounded-md border border-slate-200 object-cover"
+                    className="h-28 w-full rounded-md border border-border object-cover"
                   />
                   <Button
                     type="button"
@@ -337,7 +497,7 @@ export default function MerchPage() {
         onClose={crud.closeDeleteModal}
         maxWidthClass="max-w-md"
       >
-        <p className="mb-6 text-sm text-slate-600">
+        <p className="mb-6 text-sm text-muted-foreground">
           Voulez-vous vraiment supprimer l’article {crud.itemToDelete?.title ?? ''} ?
         </p>
 

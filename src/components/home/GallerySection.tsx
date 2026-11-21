@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import Image from "next/image";
 import { Dialog } from "radix-ui";
 import { useCallback, useEffect, useState } from "react";
@@ -28,6 +28,7 @@ function isFeatured(index: number) {
 
 export function GallerySection({ photos, latestVideoUrl }: GallerySectionProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
   const isOpen = activeIndex !== null;
   const videoEmbedUrl = latestVideoUrl ? getVideoEmbedUrl(latestVideoUrl) : null;
 
@@ -124,14 +125,32 @@ export function GallerySection({ photos, latestVideoUrl }: GallerySectionProps) 
               Dernière vidéo
             </p>
             <div className="mx-auto aspect-video w-full max-w-3xl overflow-hidden">
-              <iframe
-                src={videoEmbedUrl}
-                title="Dernière vidéo"
-                className="h-full w-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                loading="lazy"
-              />
+              {videoLoaded ? (
+                <iframe
+                  src={`${videoEmbedUrl}${videoEmbedUrl.includes("?") ? "&" : "?"}autoplay=1`}
+                  title="Dernière vidéo"
+                  className="h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              ) : (
+                // Consentement au clic : aucune requête vers la plateforme
+                // vidéo (ni cookie) tant que le visiteur n'a pas demandé la lecture.
+                <div className="flex h-full w-full flex-col items-center justify-center gap-4 bg-black/80 p-6 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setVideoLoaded(true)}
+                    className="flex h-16 w-16 items-center justify-center rounded-full bg-instinct-purple text-white transition hover:scale-105"
+                    aria-label="Lire la vidéo"
+                  >
+                    <Play className="ml-1 h-7 w-7" fill="currentColor" />
+                  </button>
+                  <p className="max-w-md text-xs text-white/70">
+                    En lisant cette vidéo, vous acceptez que la plateforme qui l&apos;héberge
+                    dépose des cookies et collecte des données sur votre navigation.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

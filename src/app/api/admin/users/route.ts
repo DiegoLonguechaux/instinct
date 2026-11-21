@@ -1,5 +1,6 @@
 import dbConnect from '@/lib/db';
 import { requireSuperAdmin } from '@/lib/api-route-helpers';
+import { BCRYPT_ROUNDS, MIN_PASSWORD_LENGTH } from '@/lib/auth-config';
 import UserModel from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
@@ -13,8 +14,9 @@ export type CreateUserPayload = {
   role?: UserRole;
 };
 
-export function normalizeRole(role: UserRole | undefined) {
-  return role === 'super-admin' ? 'super-admin' : (role ?? 'admin');
+// Toute valeur inconnue retombe sur le rôle le moins privilégié.
+export function normalizeRole(role: UserRole | undefined): UserRole {
+  return role === 'super-admin' ? 'super-admin' : 'admin';
 }
 
 export function serializeUser(user: {
@@ -64,9 +66,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (password.length < 6) {
+  if (password.length < MIN_PASSWORD_LENGTH) {
     return NextResponse.json(
-      { error: 'Le mot de passe doit contenir au moins 6 caractères.' },
+      { error: `Le mot de passe doit contenir au moins ${MIN_PASSWORD_LENGTH} caractères.` },
       { status: 400 }
     );
   }
@@ -78,7 +80,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Cet email existe déjà.' }, { status: 409 });
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
   const created = await UserModel.create({
     firstName,
     email,

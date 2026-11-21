@@ -5,6 +5,9 @@ export interface IUser extends Document {
   password: string;
   firstName: string;
   role: 'admin' | 'super-admin';
+  // Incrémenté à chaque changement de mot de passe : les sessions émises
+  // avant (autre version) sont rejetées au prochain rafraîchissement du JWT.
+  tokenVersion: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,6 +31,10 @@ const UserSchema = new mongoose.Schema<IUser>(
       type: String,
       enum: ['admin', 'super-admin'],
       default: 'admin',
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }
