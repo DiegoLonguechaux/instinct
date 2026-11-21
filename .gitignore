@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -47,3 +48,6 @@ next-env.d.ts
 
 # worker MapLibre copié depuis node_modules (scripts/copy-maplibre-worker.mjs)
 /public/map/maplibre-gl-*.mjs
+
+# rapports de migration Blob -> S3
+migration-blob-s3-*.json
