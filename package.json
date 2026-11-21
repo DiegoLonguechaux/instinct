@@ -12,6 +12,8 @@
     "postinstall": "node scripts/copy-maplibre-worker.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1175.0",
+    "@aws-sdk/s3-request-presigner": "^3.1175.0",
     "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-table": "^8.21.3",
     "@tiptap/extension-link": "^3.32.2",
