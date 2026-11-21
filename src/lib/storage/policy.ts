@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { MAX_IMAGE_SIZE, MAX_PDF_SIZE, MAX_ZIP_SIZE } from './limits';
 
 export const UPLOAD_FOLDERS = [
   'group',
@@ -11,12 +12,6 @@ export const UPLOAD_FOLDERS = [
 ] as const;
 
 export type UploadFolder = (typeof UPLOAD_FOLDERS)[number];
-
-const MB = 1024 * 1024;
-
-export const MAX_IMAGE_SIZE = 10 * MB;
-export const MAX_PDF_SIZE = 20 * MB;
-export const MAX_ZIP_SIZE = 200 * MB;
 
 type UploadRule = { extension: string; maxSize: number };
 

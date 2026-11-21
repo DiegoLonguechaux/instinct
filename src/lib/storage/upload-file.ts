@@ -1,4 +1,5 @@
 import type { UploadFolder } from './policy';
+import { reencodeImage } from './resize-image';
 
 type UploadFileOptions = {
   /** Progression de l'envoi, de 0 à 100. */
@@ -61,7 +62,12 @@ function putFile(file: File, { uploadUrl, headers }: UploadUrlResponse, onProgre
  * Lève une Error au message lisible, affichable tel quel.
  */
 export async function uploadFile(file: File, folder: UploadFolder, options: UploadFileOptions = {}) {
-  const upload = await requestUploadUrl(file, folder);
-  await putFile(file, upload, options.onProgress);
+  // Les images sont toujours réencodées (EXIF/GPS supprimé, 2560 px max) ;
+  // PDF et ZIP partent tels quels. Le type et la taille déclarés à la route
+  // sont donc ceux du fichier réellement envoyé.
+  const toUpload = file.type.startsWith('image/') ? await reencodeImage(file) : file;
+
+  const upload = await requestUploadUrl(toUpload, folder);
+  await putFile(toUpload, upload, options.onProgress);
   return upload.publicUrl;
 }
