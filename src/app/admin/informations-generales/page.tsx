@@ -1,6 +1,6 @@
 'use client';
 
-import { upload } from '@vercel/blob/client';
+import { uploadFile } from '@/lib/storage/upload-file';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -363,19 +363,17 @@ export default function InformationsGeneralesPage() {
     }
 
     try {
-      const blob = await upload(file.name, file, {
-        access: 'public',
-        handleUploadUrl: '/api/admin/upload-image',
-      });
+      // imageType correspond exactement au nom du dossier de stockage.
+      const url = await uploadFile(file, imageType);
 
       if (imageType === 'group') {
-        setForm((prev) => ({ ...prev, groupPhotoUrl: blob.url }));
+        setForm((prev) => ({ ...prev, groupPhotoUrl: url }));
         setGroupPhotoPreview('');
       } else if (imageType === 'logo') {
-        setForm((prev) => ({ ...prev, logoUrl: blob.url }));
+        setForm((prev) => ({ ...prev, logoUrl: url }));
         setLogoPreview('');
       } else {
-        setForm((prev) => ({ ...prev, signatureLogoUrl: blob.url }));
+        setForm((prev) => ({ ...prev, signatureLogoUrl: url }));
         setSignatureLogoPreview('');
       }
     } catch (error) {
@@ -396,12 +394,9 @@ export default function InformationsGeneralesPage() {
     setIsUploadingPressKit(true);
 
     try {
-      const blob = await upload(file.name, file, {
-        access: 'public',
-        handleUploadUrl: '/api/admin/upload-image',
-      });
+      const pressKitUrl = await uploadFile(file, 'press-kit');
 
-      setForm((prev) => ({ ...prev, pressKitUrl: blob.url }));
+      setForm((prev) => ({ ...prev, pressKitUrl }));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Erreur lors de l’upload du kit press.');
     } finally {
@@ -452,7 +447,7 @@ export default function InformationsGeneralesPage() {
               <Input
                 id="groupPhoto"
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,image/avif"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
@@ -477,7 +472,7 @@ export default function InformationsGeneralesPage() {
               <Input
                 id="logo"
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,image/avif"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
@@ -506,7 +501,7 @@ export default function InformationsGeneralesPage() {
             <Input
               id="signatureLogo"
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/png,image/jpeg,image/webp,image/avif"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {

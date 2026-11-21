@@ -1,6 +1,6 @@
 'use client';
 
-import { upload } from '@vercel/blob/client';
+import { uploadFile } from '@/lib/storage/upload-file';
 import { AdminModal } from '@/components/admin/admin-modal';
 import { DataTable } from '@/components/admin/data-table';
 import { Button } from '@/components/ui/button';
@@ -69,13 +69,10 @@ export default function GaleriePage() {
     setIsUploadingImage(true);
 
     try {
-      const blob = await upload(file.name, file, {
-        access: 'public',
-        handleUploadUrl: '/api/admin/upload-image',
-      });
-      crud.setForm((prev) => ({ ...prev, imageUrl: blob.url }));
-    } catch {
-      crud.setMessage('Erreur lors de l’upload de la photo.');
+      const imageUrl = await uploadFile(file, 'gallery');
+      crud.setForm((prev) => ({ ...prev, imageUrl }));
+    } catch (error) {
+      crud.setMessage(error instanceof Error ? error.message : 'Erreur lors de l’upload de la photo.');
     } finally {
       setIsUploadingImage(false);
     }
@@ -91,10 +88,7 @@ export default function GaleriePage() {
     // la création des autres.
     const results = await Promise.allSettled(
       fileArray.map(async (file, index) => {
-        const blob = await upload(file.name, file, {
-          access: 'public',
-          handleUploadUrl: '/api/admin/upload-image',
-        });
+        const imageUrl = await uploadFile(file, 'gallery');
 
         // Titre non demandé par l'utilisateur pour ce flux : on en génère un
         // simple, propre à ce lot (photo-01, photo-02, ...) plutôt que de
@@ -104,7 +98,7 @@ export default function GaleriePage() {
         const response = await fetch('/api/admin/gallery', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, description: '', imageUrl: blob.url }),
+          body: JSON.stringify({ title, description: '', imageUrl }),
         });
 
         if (!response.ok) {
@@ -197,7 +191,7 @@ export default function GaleriePage() {
             ref={bulkFileInputRef}
             type="file"
             multiple
-            accept="image/png,image/jpeg,image/webp"
+            accept="image/png,image/jpeg,image/webp,image/avif"
             className="hidden"
             onChange={(e) => {
               const { files } = e.target;
@@ -255,7 +249,7 @@ export default function GaleriePage() {
             <Input
               id="image"
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/png,image/jpeg,image/webp,image/avif"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {

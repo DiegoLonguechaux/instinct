@@ -1,7 +1,7 @@
 'use client';
 
 import { NativeSelect } from "@/components/ui/native-select";
-import { upload } from '@vercel/blob/client';
+import { uploadFile } from '@/lib/storage/upload-file';
 import { AdminModal } from '@/components/admin/admin-modal';
 import { DataTable } from '@/components/admin/data-table';
 import { Button } from '@/components/ui/button';
@@ -110,13 +110,10 @@ export default function SortiesPage() {
     setIsUploadingCover(true);
 
     try {
-      const blob = await upload(file.name, file, {
-        access: 'public',
-        handleUploadUrl: '/api/admin/upload-image',
-      });
-      crud.setForm((prev) => ({ ...prev, coverUrl: blob.url }));
-    } catch {
-      crud.setMessage('Erreur lors de l’upload de la pochette.');
+      const coverUrl = await uploadFile(file, 'releases');
+      crud.setForm((prev) => ({ ...prev, coverUrl }));
+    } catch (error) {
+      crud.setMessage(error instanceof Error ? error.message : 'Erreur lors de l’upload de la pochette.');
     } finally {
       setIsUploadingCover(false);
     }
@@ -219,7 +216,7 @@ export default function SortiesPage() {
             <Input
               id="cover"
               type="file"
-              accept="image/png,image/jpeg,image/webp"
+              accept="image/png,image/jpeg,image/webp,image/avif"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {

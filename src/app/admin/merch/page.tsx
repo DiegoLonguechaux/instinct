@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useAdminCrud } from '@/hooks/use-admin-crud';
 import { formatPrice, LOW_STOCK_THRESHOLD, type MerchItem as Merch } from '@/lib/merch';
 import { ColumnDef } from '@tanstack/react-table';
-import { upload } from '@vercel/blob/client';
+import { uploadFile } from '@/lib/storage/upload-file';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
@@ -46,12 +46,8 @@ const defaultForm: MerchForm = {
   image2: '',
 };
 
-async function uploadOneImage(file: File) {
-  const blob = await upload(file.name, file, {
-    access: 'public',
-    handleUploadUrl: '/api/admin/upload-image',
-  });
-  return blob.url;
+function uploadOneImage(file: File) {
+  return uploadFile(file, 'merch');
 }
 
 export default function MerchPage() {
@@ -404,7 +400,7 @@ export default function MerchPage() {
               <Input
                 id="image1"
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,image/avif"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
@@ -442,7 +438,7 @@ export default function MerchPage() {
               <Input
                 id="image2"
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,image/avif"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {
