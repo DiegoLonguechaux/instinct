@@ -51,3 +51,4 @@ next-env.d.ts
 
 # rapports de migration Blob -> S3
 migration-blob-s3-*.json
+migration-local-uploads-s3-*.json
