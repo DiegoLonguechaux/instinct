@@ -1,6 +1,7 @@
 'use client';
 
 import { formatDateTime, StatusBadge, type AdminOrder } from '@/components/admin/order-ui';
+import { formatCgvVersion } from '@/lib/legal-config';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatPrice } from '@/lib/merch';
@@ -122,6 +123,11 @@ export default function OrderDetailPage() {
                 <div className="flex justify-between text-muted-foreground"><dt>Frais Stripe</dt><dd className="tabular-nums">{formatPrice(order.payment.stripeFee)}</dd></div>
               )}
             </dl>
+            <p className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
+              {order.legal.termsAccepted && order.legal.termsAcceptedAt
+                ? `CGV acceptées le ${formatDateTime(order.legal.termsAcceptedAt)}${order.legal.cgvVersion ? ` – version du ${formatCgvVersion(order.legal.cgvVersion)}` : ''}`
+                : 'Acceptation des CGV non enregistrée (commande antérieure ou non payée).'}
+            </p>
           </section>
 
           <section className="rounded-lg border border-border p-4 text-sm">

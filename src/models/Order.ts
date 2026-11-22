@@ -41,6 +41,12 @@ export interface IOrder extends Document {
     paidAt?: Date;
     refundedAt?: Date;
   };
+  // Preuve d'acceptation des CGV (case Stripe Checkout). Absente des commandes antérieures.
+  legal?: {
+    termsAccepted?: boolean;
+    termsAcceptedAt?: Date;
+    cgvVersion?: string;
+  };
   shipment: {
     boxtalOrderId: string;
     trackingNumber: string;
@@ -132,6 +138,11 @@ const OrderSchema = new mongoose.Schema<IOrder>(
       stripeFee: { type: Number, default: 0 },
       paidAt: Date,
       refundedAt: Date,
+    },
+    legal: {
+      termsAccepted: { type: Boolean },
+      termsAcceptedAt: { type: Date },
+      cgvVersion: { type: String },
     },
     shipment: {
       boxtalOrderId: { type: String, default: '' },

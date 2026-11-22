@@ -31,7 +31,7 @@ function orderIdOf(session: Stripe.Checkout.Session) {
   return mongoose.Types.ObjectId.isValid(id) ? id : null;
 }
 
-async function handlePaid(session: Stripe.Checkout.Session) {
+async function handlePaid(session: Stripe.Checkout.Session, eventCreated: number) {
   const orderId = orderIdOf(session);
   if (!orderId || session.payment_status !== 'paid') {
     return;
@@ -41,7 +41,16 @@ async function handlePaid(session: Stripe.Checkout.Session) {
     typeof session.payment_intent === 'string' ? session.payment_intent : (session.payment_intent?.id ?? '');
   const fee = paymentIntentId ? await fetchStripeFee(paymentIntentId) : 0;
 
-  const { order, refundNeeded } = await markOrderPaid(orderId, { sessionId: session.id, paymentIntentId, fee });
+  const { order, refundNeeded } = await markOrderPaid(orderId, {
+    sessionId: session.id,
+    paymentIntentId,
+    fee,
+    legal: {
+      termsAccepted: session.consent?.terms_of_service === 'accepted',
+      termsAcceptedAt: new Date(eventCreated * 1000),
+      cgvVersion: session.metadata?.cgvVersion,
+    },
+  });
 
   if (refundNeeded && order) {
     // Paiement arrivé après expiration, stock revendu entre-temps : on rembourse.
@@ -115,7 +124,7 @@ export async function POST(request: Request) {
     switch (event.type) {
       case 'checkout.session.completed':
       case 'checkout.session.async_payment_succeeded':
-        await handlePaid(event.data.object);
+        await handlePaid(event.data.object, event.created);
         break;
       case 'checkout.session.expired':
       case 'checkout.session.async_payment_failed':

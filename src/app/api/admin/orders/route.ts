@@ -40,6 +40,11 @@ export function serializeOrder(order: IOrder | (Omit<IOrder, keyof import('mongo
       paidAt: order.payment.paidAt ? order.payment.paidAt.toISOString() : null,
       refundedAt: order.payment.refundedAt ? order.payment.refundedAt.toISOString() : null,
     },
+    legal: {
+      termsAccepted: order.legal?.termsAccepted ?? null,
+      termsAcceptedAt: order.legal?.termsAcceptedAt ? order.legal.termsAcceptedAt.toISOString() : null,
+      cgvVersion: order.legal?.cgvVersion ?? null,
+    },
     shipment: {
       boxtalOrderId: order.shipment.boxtalOrderId,
       trackingNumber: order.shipment.trackingNumber,

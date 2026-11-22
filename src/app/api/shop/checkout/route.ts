@@ -1,4 +1,5 @@
 import { appUrl } from '@/lib/app-url';
+import { CGV_VERSION } from '@/lib/legal-config';
 import dbConnect from '@/lib/db';
 import { generateToken } from '@/lib/auth-tokens';
 import { expireOrder, generateOrderNumber, releaseExpiredOrders } from '@/lib/orders';
@@ -188,7 +189,14 @@ export async function POST(request: Request) {
         customer_email: customer.email,
         client_reference_id: order._id.toString(),
         line_items: lineItems,
-        metadata: { orderId: order._id.toString(), orderNumber: order.number },
+        metadata: { orderId: order._id.toString(), orderNumber: order.number, cgvVersion: CGV_VERSION },
+        // Case obligatoire sur la page Stripe : la preuve d'acceptation est relue par le webhook.
+        consent_collection: { terms_of_service: 'required' },
+        custom_text: {
+          terms_of_service_acceptance: {
+            message: `J’accepte les [conditions générales de vente](${base}/cgv) et la [politique de confidentialité](${base}/confidentialite).`,
+          },
+        },
         payment_intent_data: {
           description: `Commande ${order.number}`,
           metadata: { orderId: order._id.toString(), orderNumber: order.number },

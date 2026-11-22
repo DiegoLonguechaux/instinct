@@ -76,7 +76,12 @@ export async function releaseExpiredOrders(force = false) {
   return released;
 }
 
-type PaymentDetails = { sessionId: string; paymentIntentId: string; fee: number };
+type PaymentDetails = {
+  sessionId: string;
+  paymentIntentId: string;
+  fee: number;
+  legal: { termsAccepted: boolean; termsAcceptedAt: Date; cgvVersion?: string };
+};
 
 /**
  * Appelée par le webhook Stripe quand le paiement est confirmé. Idempotente :
@@ -92,6 +97,9 @@ export async function markOrderPaid(orderId: unknown, payment: PaymentDetails) {
     'payment.stripePaymentIntentId': payment.paymentIntentId,
     'payment.stripeFee': payment.fee,
     'payment.paidAt': new Date(),
+    'legal.termsAccepted': payment.legal.termsAccepted,
+    'legal.termsAcceptedAt': payment.legal.termsAcceptedAt,
+    ...(payment.legal.cgvVersion ? { 'legal.cgvVersion': payment.legal.cgvVersion } : {}),
   };
 
   let order = await transitionOrder(orderId, ['pending_payment'], 'paid', {

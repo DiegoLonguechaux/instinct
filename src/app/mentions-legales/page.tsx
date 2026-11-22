@@ -1,31 +1,44 @@
-import { LegalPage, Todo } from '@/components/shop/LegalPage';
+import { LegalPage } from '@/components/shop/LegalPage';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = { title: 'Mentions légales | INSTINCT' };
 
 export default function Page() {
   return (
-    <LegalPage title="Mentions légales" updatedAt="à compléter">
+    <LegalPage title="Mentions légales" updatedAt="22 novembre 2026">
       <h2>Éditeur du site</h2>
       <p>
-        Le site est édité par <Todo>nom de l’association ou de la structure, forme juridique</Todo>, dont le siège est situé{' '}
-        <Todo>adresse complète</Todo>.
+        Le site instinctofficial.fr est édité par <strong>INSTINCT HARDCORE</strong>, association
+        régie par la loi du 1er juillet 1901, déclarée sous le numéro RNA W336008118, SIRET{' '}
+        99037440700015.
       </p>
       <p>
-        Numéro SIRET : <Todo>numéro SIRET</Todo>. Directeur de la publication : <Todo>nom et prénom</Todo>.
+        Siège : 24 Boulevard des Girondins, 33380 Marcheprime, France
+        <br />
+        Email : contact@instinctofficial.fr
+        <br />
+        Téléphone : 06 59 77 82 58
       </p>
-      <p>Contact : <Todo>adresse email de contact</Todo>.</p>
+      <p>
+        Directeur de la publication : Diego Longuechaux
+      </p>
 
       <h2>Hébergement</h2>
       <p>
-        Le site est hébergé par Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis. Les données sont
-        stockées dans une base MongoDB hébergée par <Todo>hébergeur de la base de données et région</Todo>.
+        Le site est hébergé par <strong>OVH SAS</strong>, 2 rue Kellermann, 59100 Roubaix, France – Téléphone :{' '}
+        09 72 10 10 07.
       </p>
 
       <h2>Propriété intellectuelle</h2>
       <p>
-        L’ensemble des contenus du site (textes, photographies, visuels, logo, musiques) est la propriété du groupe ou
-        utilisé avec autorisation. Toute reproduction sans accord écrit préalable est interdite.
+        L’ensemble des contenus du site (textes, photographies, visuels, logos, musiques) est la propriété de
+        l’association INSTINCT HARDCORE ou de leurs auteurs respectifs, et est utilisé avec leur autorisation. Toute
+        reproduction ou représentation, même partielle, sans accord écrit préalable est interdite.
+      </p>
+
+      <h2>Liens utiles</h2>
+      <p>
+        <a href="/cgv">Conditions générales de vente</a> – <a href="/confidentialite">Politique de confidentialité</a>
       </p>
     </LegalPage>
   );

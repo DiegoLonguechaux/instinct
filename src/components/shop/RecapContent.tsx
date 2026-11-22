@@ -17,7 +17,6 @@ export function RecapContent() {
   const { cart, isLoading: cartLoading, notice } = useCartDetails();
   const { options, isLoading: shippingLoading } = useShippingOptions();
   const [state] = useCheckoutState();
-  const [accepted, setAccepted] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [error, setError] = useState('');
 
@@ -113,16 +112,6 @@ export function RecapContent() {
           <p className="mt-3 text-sm text-instinct-foreground/60">Frais de livraison : {formatPrice(shippingCost)}</p>
         </section>
 
-        <label className="flex items-start gap-3 text-sm">
-          <input type="checkbox" className="mt-1 size-4 accent-[#9D75A6]" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />
-          <span>
-            J’ai lu et j’accepte les{' '}
-            <Link href="/cgv" target="_blank" className="underline hover:text-instinct-purple">conditions générales de vente</Link>
-            {' '}et la{' '}
-            <Link href="/confidentialite" target="_blank" className="underline hover:text-instinct-purple">politique de confidentialité</Link>.
-          </span>
-        </label>
-
         {error && (
           <p role="alert" className="border border-red-400/60 p-3 text-sm text-red-300">
             {error}{' '}
@@ -137,7 +126,14 @@ export function RecapContent() {
         shippingCost={shippingCost}
         footer={
           <>
-            <button type="button" onClick={pay} disabled={!accepted || isPaying} className={cn(shopButtonClass, 'mt-6')}>
+            <p className="mt-6 text-sm text-instinct-foreground/70">
+              Vous accepterez nos{' '}
+              <Link href="/cgv" target="_blank" rel="noopener noreferrer" className="underline hover:text-instinct-purple">conditions générales de vente</Link>
+              {' '}et notre{' '}
+              <Link href="/confidentialite" target="_blank" rel="noopener noreferrer" className="underline hover:text-instinct-purple">politique de confidentialité</Link>
+              {' '}à l’étape suivante, sur la page de paiement sécurisée.
+            </p>
+            <button type="button" onClick={pay} disabled={isPaying} className={cn(shopButtonClass, 'mt-3')}>
               {isPaying ? 'Redirection...' : `Payer ${formatPrice(total)}`}
             </button>
             <p className="mt-3 text-center text-xs text-instinct-foreground/50">

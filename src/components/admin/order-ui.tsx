@@ -24,6 +24,7 @@ export type AdminOrder = {
     weightGrams: number;
   };
   payment: { stripePaymentIntentId: string; stripeFee: number; paidAt: string | null; refundedAt: string | null };
+  legal: { termsAccepted: boolean | null; termsAcceptedAt: string | null; cgvVersion: string | null };
   shipment: {
     boxtalOrderId: string;
     trackingNumber: string;
