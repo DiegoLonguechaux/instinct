@@ -16,23 +16,25 @@ import {
   type MerchItem,
   type PaymentMethod,
 } from '@/lib/merch';
+import {
+  applyPendingStock,
+  isNetworkError,
+  loadQueue,
+  loadSnapshot,
+  saveQueue,
+  saveSnapshot,
+  type CaisseConcert as Concert,
+  type CaisseSale as Sale,
+  type PendingSale,
+} from '@/lib/offline-sales';
 import { cn } from '@/lib/utils';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-type Concert = { id: string; date: string; venue: string };
-
-type Sale = {
-  id: string;
-  items: { title: string; size: string; quantity: number; unitPrice: number }[];
-  total: number;
-  fee: number;
-  net: number;
-  paymentMethod: PaymentMethod;
-  concertLabel: string;
-  status: 'completed' | 'cancelled';
-  createdAt: string;
-};
+// Au-delà, on considère le réseau perdu : la vente part dans la file d'attente
+// (le même clientId évite tout doublon si la première requête avait en fait abouti).
+const REQUEST_TIMEOUT_MS = 15_000;
+const SYNC_INTERVAL_MS = 20_000;
 
 type CartLine = {
   key: string;
@@ -52,11 +54,36 @@ async function readError(response: Response, fallback: string) {
   return data?.error || fallback;
 }
 
+async function postSale(sale: PendingSale) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch('/api/admin/merch/sales', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({
+        clientId: sale.clientId,
+        paymentMethod: sale.paymentMethod,
+        concertId: sale.concertId,
+        items: sale.items.map(({ merchId, size, quantity, unitPrice }) => ({ merchId, size, quantity, unitPrice })),
+      }),
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export default function CaissePage() {
   const [products, setProducts] = useState<MerchItem[]>([]);
   const [concerts, setConcerts] = useState<Concert[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Ventes enregistrées sans réseau, pas encore envoyées (la source de vérité est le localStorage).
+  const [queue, setQueue] = useState<PendingSale[]>([]);
+  const [isOffline, setIsOffline] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const flushingRef = useRef(false);
 
   const [cart, setCart] = useState<CartLine[]>([]);
   const [payment, setPayment] = useState<PaymentMethod | ''>('');
@@ -69,6 +96,26 @@ export default function CaissePage() {
   // serveur ne l'enregistre qu'une fois. Renouvelé après chaque succès.
   const clientIdRef = useRef(crypto.randomUUID());
 
+  const applyConcerts = useCallback((list: Concert[]) => {
+    const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date));
+    setConcerts(sorted);
+    const today = parisDay(new Date());
+    const todays = sorted.find((concert) => parisDay(new Date(concert.date)) === today);
+    if (todays) {
+      setConcertId(todays.id);
+    }
+  }, []);
+
+  // Modifie la file à partir de ce qui est réellement stocké ; false si le navigateur refuse l'écriture.
+  const updateQueue = useCallback((change: (current: PendingSale[]) => PendingSale[]) => {
+    const next = change(loadQueue());
+    const saved = saveQueue(next);
+    if (saved) {
+      setQueue(next);
+    }
+    return saved;
+  }, []);
+
   const loadAll = useCallback(async () => {
     try {
       const [productsRes, salesRes] = await Promise.all([
@@ -78,32 +125,138 @@ export default function CaissePage() {
       if (!productsRes.ok || !salesRes.ok) {
         throw new Error('load failed');
       }
-      setProducts((await productsRes.json()) as MerchItem[]);
-      setSales((await salesRes.json()) as Sale[]);
-    } catch {
-      setFeedback({ text: 'Erreur lors du chargement de la caisse.', isError: true });
+      const loadedProducts = (await productsRes.json()) as MerchItem[];
+      const loadedSales = (await salesRes.json()) as Sale[];
+      setProducts(loadedProducts);
+      setSales(loadedSales);
+      saveSnapshot({ products: loadedProducts, sales: loadedSales });
+      setIsOffline(false);
+    } catch (error) {
+      // Sans réseau, on repart de la dernière copie du catalogue.
+      const snapshot = loadSnapshot();
+      if (snapshot && snapshot.products.length > 0) {
+        setProducts(snapshot.products);
+        setSales(snapshot.sales);
+        if (isNetworkError(error)) {
+          setIsOffline(true);
+        } else {
+          setFeedback({ text: 'Serveur indisponible : catalogue de la dernière connexion affiché.', isError: true });
+        }
+      } else {
+        setFeedback({
+          text: isNetworkError(error)
+            ? 'Pas de réseau et aucune copie locale : ouvrez la caisse une fois avec du réseau.'
+            : 'Erreur lors du chargement de la caisse.',
+          isError: true,
+        });
+      }
     } finally {
+      setQueue(loadQueue());
       setIsLoading(false);
     }
   }, []);
 
+  // Envoie les ventes en attente dans l'ordre. S'arrête au premier problème de réseau ou de session ;
+  // une vente refusée par le serveur est marquée en erreur et n'est plus renvoyée.
+  const flushQueue = useCallback(async () => {
+    if (flushingRef.current || loadQueue().every((sale) => sale.error)) {
+      return;
+    }
+    flushingRef.current = true;
+    setIsSyncing(true);
+
+    let sent = 0;
+    let stop: 'network' | 'auth' | 'server' | null = null;
+    try {
+      for (const sale of loadQueue()) {
+        if (sale.error) {
+          continue;
+        }
+        try {
+          const response = await postSale(sale);
+          if (response.ok) {
+            updateQueue((current) => current.filter((item) => item.clientId !== sale.clientId));
+            sent += 1;
+          } else if (response.status === 401) {
+            stop = 'auth';
+            break;
+          } else if (response.status >= 500) {
+            stop = 'server';
+            break;
+          } else {
+            const message = await readError(response, 'Vente refusée par le serveur.');
+            updateQueue((current) =>
+              current.map((item) => (item.clientId === sale.clientId ? { ...item, error: message } : item))
+            );
+          }
+        } catch (error) {
+          if (!isNetworkError(error)) {
+            throw error;
+          }
+          stop = 'network';
+          break;
+        }
+      }
+    } finally {
+      flushingRef.current = false;
+      setIsSyncing(false);
+    }
+
+    if (stop === 'network') {
+      setIsOffline(true);
+    } else if (stop === 'auth') {
+      setFeedback({ text: 'Session expirée : reconnectez-vous pour envoyer les ventes en attente.', isError: true });
+    } else if (stop === 'server') {
+      setFeedback({ text: 'Serveur indisponible : les ventes en attente seront renvoyées.', isError: true });
+    }
+    if (sent > 0) {
+      setIsOffline(false);
+      setFeedback({
+        text: `${sent} vente${sent > 1 ? 's' : ''} envoyée${sent > 1 ? 's' : ''} au serveur.`,
+        isError: false,
+      });
+      await loadAll();
+    }
+  }, [loadAll, updateQueue]);
+
   useEffect(() => {
-    loadAll();
+    loadAll().then(() => flushQueue());
 
     // Les concerts ne servent qu'à étiqueter la vente : un échec n'est pas bloquant.
     fetch('/api/admin/concerts')
       .then((response) => (response.ok ? response.json() : []))
       .then((list: Concert[]) => {
-        const sorted = [...list].sort((a, b) => b.date.localeCompare(a.date));
-        setConcerts(sorted);
-        const today = parisDay(new Date());
-        const todays = sorted.find((concert) => parisDay(new Date(concert.date)) === today);
-        if (todays) {
-          setConcertId(todays.id);
-        }
+        saveSnapshot({ concerts: list });
+        applyConcerts(list);
       })
-      .catch(() => setConcerts([]));
-  }, [loadAll]);
+      .catch(() => applyConcerts(loadSnapshot()?.concerts ?? []));
+
+    // Permet d'ouvrir la caisse sans réseau (copie de la page et des fichiers).
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+    }
+  }, [loadAll, flushQueue, applyConcerts]);
+
+  // Retour du réseau : on envoie tout de suite ; tant qu'il reste des ventes, on réessaie régulièrement.
+  useEffect(() => {
+    const goOnline = () => {
+      setIsOffline(false);
+      void flushQueue();
+    };
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    const timer = setInterval(() => void flushQueue(), SYNC_INTERVAL_MS);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+      clearInterval(timer);
+    };
+  }, [flushQueue]);
+
+  // Le catalogue affiché tient compte des ventes en attente (le serveur ne les a pas encore décomptées).
+  const displayProducts = useMemo(() => applyPendingStock(products, queue), [products, queue]);
+  const pendingCount = queue.filter((sale) => !sale.error).length;
 
   const availableFor = (product: MerchItem, size: string) =>
     variantsOf(product).find((variant) => variant.size === size)?.quantity ?? 0;
@@ -181,32 +334,55 @@ export default function CaissePage() {
     setIsSubmitting(true);
     setFeedback(null);
 
-    try {
-      const response = await fetch('/api/admin/merch/sales', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId: clientIdRef.current,
-          paymentMethod: payment,
-          concertId: concertId || undefined,
-          items: cart.map((line) => ({
-            merchId: line.merchId,
-            size: line.size,
-            quantity: line.quantity,
-            unitPrice: parsePrice(line.unitPrice),
-          })),
-        }),
-      });
+    const sale: PendingSale = {
+      clientId: clientIdRef.current,
+      paymentMethod: payment,
+      concertId: concertId || undefined,
+      items: cart.map((line) => ({
+        merchId: line.merchId,
+        title: line.title,
+        size: line.size,
+        quantity: line.quantity,
+        unitPrice: parsePrice(line.unitPrice),
+      })),
+      total,
+      createdAt: new Date().toISOString(),
+    };
 
-      if (!response.ok) {
-        throw new Error(await readError(response, 'Erreur lors de l’enregistrement de la vente.'));
+    try {
+      let response: Response | null = null;
+      try {
+        response = await postSale(sale);
+      } catch (error) {
+        if (!isNetworkError(error)) {
+          throw error;
+        }
       }
 
-      setFeedback({ text: `Vente enregistrée : ${formatPrice(total)} (${PAYMENT_LABELS[payment]}).`, isError: false });
+      if (response) {
+        if (!response.ok) {
+          throw new Error(await readError(response, 'Erreur lors de l’enregistrement de la vente.'));
+        }
+        setFeedback({ text: `Vente enregistrée : ${formatPrice(total)} (${PAYMENT_LABELS[payment]}).`, isError: false });
+      } else {
+        // Pas de réseau : la vente est gardée sur cet appareil et partira au retour de la connexion.
+        if (!updateQueue((current) => [...current, sale])) {
+          throw new Error('Pas de réseau et stockage local indisponible : la vente n’a PAS été enregistrée.');
+        }
+        setIsOffline(true);
+        setFeedback({
+          text: `Vente enregistrée hors-ligne : ${formatPrice(total)} (${PAYMENT_LABELS[payment]}). Elle sera envoyée au retour du réseau.`,
+          isError: false,
+        });
+      }
+
       setCart([]);
       setPayment('');
       clientIdRef.current = crypto.randomUUID();
-      await loadAll();
+      if (response) {
+        await loadAll();
+        void flushQueue();
+      }
     } catch (error) {
       setFeedback({
         text: error instanceof Error ? error.message : 'Erreur lors de l’enregistrement de la vente.',
@@ -225,7 +401,13 @@ export default function CaissePage() {
     }
     setFeedback(null);
 
-    const response = await fetch(`/api/admin/merch/sales/${sale.id}`, { method: 'DELETE' });
+    let response: Response;
+    try {
+      response = await fetch(`/api/admin/merch/sales/${sale.id}`, { method: 'DELETE' });
+    } catch {
+      setFeedback({ text: 'Pas de réseau : impossible d’annuler la vente pour le moment.', isError: true });
+      return;
+    }
     if (!response.ok) {
       setFeedback({ text: await readError(response, 'Erreur lors de l’annulation.'), isError: true });
       return;
@@ -238,6 +420,13 @@ export default function CaissePage() {
     <div className="container mx-auto px-4 pt-6 pb-48 md:py-10">
       <h1 className="mb-6 text-3xl font-bold">Merch - Caisse</h1>
       <MerchNav />
+
+      {isOffline && (
+        <p role="status" className="mb-4 rounded-md bg-amber-500/15 px-3 py-2 text-sm text-amber-400">
+          Hors-ligne : les ventes sont gardées sur cet appareil et envoyées dès le retour du réseau. Le stock affiché est
+          celui de la dernière connexion.
+        </p>
+      )}
 
       {feedback && (
         <p
@@ -256,11 +445,11 @@ export default function CaissePage() {
       ) : (
         <div className="grid gap-8 lg:grid-cols-[1fr_24rem]">
           <section aria-label="Articles">
-            {products.length === 0 ? (
+            {displayProducts.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucun article. Ajoutez-en dans l’onglet Produits.</p>
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-                {products.map((product) => {
+                {displayProducts.map((product) => {
                   const soldOut = product.totalStock === 0;
                   return (
                     <button
@@ -290,6 +479,66 @@ export default function CaissePage() {
                   );
                 })}
               </div>
+            )}
+
+            {queue.length > 0 && (
+              <>
+                <div className="mt-10 mb-3 flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-semibold">Ventes en attente d’envoi ({queue.length})</h2>
+                  {pendingCount > 0 && (
+                    <Button type="button" variant="outline" size="sm" disabled={isSyncing} onClick={() => void flushQueue()}>
+                      {isSyncing ? 'Envoi...' : 'Envoyer maintenant'}
+                    </Button>
+                  )}
+                </div>
+                <ul className="space-y-2">
+                  {queue.map((sale) => (
+                    <li
+                      key={sale.clientId}
+                      className={cn(
+                        'flex items-start justify-between gap-3 rounded-lg border p-3 text-sm',
+                        sale.error ? 'border-red-400/60' : 'border-amber-400/60'
+                      )}
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium">
+                          {sale.items.map((item) => `${item.quantity}× ${item.title}${item.size ? ` ${item.size}` : ''}`).join(', ')}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(sale.createdAt).toLocaleString('fr-FR', {
+                            timeZone: 'Europe/Paris',
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}{' '}
+                          · {PAYMENT_LABELS[sale.paymentMethod]}
+                        </p>
+                        {sale.error && (
+                          <p className="mt-1 text-xs text-red-400">
+                            Refusée par le serveur : {sale.error} À traiter à la main (la vente n’est pas enregistrée).
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-2">
+                        <span className="font-semibold">{formatPrice(sale.total)}</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (window.confirm('Abandonner cette vente non envoyée ? Elle ne sera jamais enregistrée.')) {
+                              updateQueue((current) => current.filter((item) => item.clientId !== sale.clientId));
+                            }
+                          }}
+                        >
+                          Abandonner
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
 
             <h2 className="mt-10 mb-3 text-lg font-semibold">Dernières ventes</h2>
@@ -326,7 +575,7 @@ export default function CaissePage() {
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       <span className="font-semibold">{formatPrice(sale.total)}</span>
                       {sale.status === 'completed' && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => cancelSale(sale)}>
+                        <Button type="button" variant="outline" size="sm" disabled={isOffline} onClick={() => cancelSale(sale)}>
                           Annuler
                         </Button>
                       )}

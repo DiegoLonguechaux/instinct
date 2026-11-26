@@ -5,8 +5,8 @@ import { normalizeFrenchPhone } from '@/lib/phone';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useCheckoutState } from './checkoutStore';
 import { useCart } from './CartProvider';
+import { useCheckoutState } from './checkoutStore';
 import { OrderSummary } from './OrderSummary';
 import { shopButtonClass } from './styles';
 import { useCartDetails } from './useCartDetails';
@@ -133,7 +133,7 @@ export function RecapContent() {
               <Link href="/confidentialite" target="_blank" rel="noopener noreferrer" className="underline hover:text-instinct-purple">politique de confidentialité</Link>
               {' '}à l’étape suivante, sur la page de paiement sécurisée.
             </p>
-            <button type="button" onClick={pay} disabled={isPaying} className={cn(shopButtonClass, 'mt-3')}>
+            <button type="button" onClick={pay} disabled={isPaying} className={cn(shopButtonClass, 'mt-3 cursor-pointer')}>
               {isPaying ? 'Redirection...' : `Payer ${formatPrice(total)}`}
             </button>
             <p className="mt-3 text-center text-xs text-instinct-foreground/50">

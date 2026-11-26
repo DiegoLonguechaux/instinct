@@ -1,6 +1,8 @@
 import { formatPrice } from "@/lib/merch";
 import Image from "next/image";
 import Link from "next/link";
+import { MerchCardImages } from "./MerchCardImages";
+import { MerchQuickAdd } from "./MerchQuickAdd";
 
 export type MerchItem = {
   id: string;
@@ -10,6 +12,8 @@ export type MerchItem = {
   images: string[];
   sellOnline: boolean;
   inStock: boolean;
+  /** Stock par taille (une seule entrée de taille "" pour un article sans taille). */
+  variants: { size: string; quantity: number }[];
 };
 
 type MerchSectionProps = {
@@ -64,42 +68,16 @@ export function MerchSection({ items }: MerchSectionProps) {
           // à 3 par ligne sur desktop, et `justify-center` centre les lignes
           // incomplètes (ex. un seul article) au lieu de les coller à gauche.
           <div className="flex flex-wrap justify-center gap-10" data-aos="fade-up">
-            {items.map((item) => {
-              const cover = item.images[0];
-              const hoverImage = item.images[1];
-              return (
+            {items.map((item) => (
+              <div key={item.id} className="w-full max-w-xs">
+                {/* "group" : active le survol de la photo 2 (voir MerchCardImages). Le bouton
+                    d'ajout reste hors du lien : pas de bouton imbriqué dans un <a>. */}
                 <Link
-                  key={item.id}
                   href={`/merch/${item.slug}`}
-                  className="group block w-full max-w-xs"
+                  className="group block"
                   aria-label={`${item.title}, ${formatPrice(item.price)}`}
                 >
-                  {cover && (
-                    // "relative" : la photo est en `fill`, elle a besoin de ce
-                    // conteneur pour se dimensionner. "group" : active le
-                    // group-hover de la photo 2 ci-dessous.
-                    <div className="relative aspect-4/5 w-full overflow-hidden">
-                      <Image
-                        src={cover}
-                        alt={item.title}
-                        fill
-                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 90vw"
-                        className="object-cover"
-                      />
-                      {hoverImage && (
-                        // Calque superposé qui apparaît en fondu au survol :
-                        // alt="" car c'est juste une autre vue du même produit,
-                        // déjà décrit par l'image 1 ci-dessus.
-                        <Image
-                          src={hoverImage}
-                          alt=""
-                          fill
-                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 90vw"
-                          className="object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                        />
-                      )}
-                    </div>
-                  )}
+                  <MerchCardImages images={item.images} title={item.title} />
                   <div className="mt-3 flex items-baseline justify-between gap-3">
                     <span className="truncate text-sm font-semibold tracking-widest text-instinct-foreground uppercase group-hover:text-instinct-purple">
                       {item.title}
@@ -109,8 +87,9 @@ export function MerchSection({ items }: MerchSectionProps) {
                     </span>
                   </div>
                 </Link>
-              );
-            })}
+                {item.sellOnline && item.inStock && <MerchQuickAdd merchId={item.id} variants={item.variants} />}
+              </div>
+            ))}
           </div>
         )}
 

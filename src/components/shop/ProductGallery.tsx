@@ -13,14 +13,15 @@ export function ProductGallery({ images, title }: { images: string[]; title: str
 
   return (
     <div>
-      <div className="relative aspect-4/5 w-full overflow-hidden bg-instinct-foreground/10">
+      <div className="relative aspect-4/5 w-full overflow-hidden">
         <Image
           src={images[index]}
           alt={title}
           fill
           priority
           sizes="(min-width: 1024px) 50vw, 100vw"
-          className="object-cover"
+          // contain : la photo s'affiche en entier, sans recadrage, quel que soit son format.
+          className="object-contain"
         />
       </div>
 

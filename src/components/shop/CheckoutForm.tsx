@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { type RelayPointSelection, useCheckoutState } from './checkoutStore';
 import { useCart } from './CartProvider';
+import { type RelayPointSelection, useCheckoutState } from './checkoutStore';
 import { OrderSummary } from './OrderSummary';
 import { RelayMapLoader } from './RelayMapLoader';
 import { inputClass, labelClass, shopButtonClass } from './styles';
@@ -232,7 +232,7 @@ export function CheckoutForm() {
                   disabled={!option.available}
                   onClick={() => chooseMode(mode)}
                   className={cn(
-                    'flex items-center justify-between border p-4 text-left',
+                    'flex items-center justify-between border p-4 text-left cursor-pointer',
                     state.mode === mode ? 'border-instinct-purple bg-instinct-purple/10' : 'border-instinct-foreground/30 hover:border-instinct-purple',
                     !option.available && 'cursor-not-allowed opacity-40 hover:border-instinct-foreground/30'
                   )}
@@ -250,7 +250,7 @@ export function CheckoutForm() {
                 type="button"
                 onClick={() => locateMe()}
                 disabled={isSearching}
-                className="w-full border border-instinct-purple px-6 py-3 text-sm font-semibold tracking-widest text-instinct-purple uppercase hover:bg-instinct-purple/10 disabled:opacity-40 sm:w-auto"
+                className="w-full border border-instinct-purple px-6 py-3 text-sm font-semibold tracking-widest text-instinct-purple uppercase hover:bg-instinct-purple/10 disabled:opacity-40 sm:w-auto cursor-pointer"
               >
                 {isSearching ? 'Recherche...' : 'Autour de moi'}
               </button>
@@ -264,7 +264,7 @@ export function CheckoutForm() {
                   <label htmlFor="searchCity" className={labelClass}>Ville</label>
                   <input id="searchCity" autoComplete="address-level2" className={inputClass} value={searchCity} onChange={(e) => setSearchCity(e.target.value)} />
                 </div>
-                <button type="button" onClick={searchRelays} disabled={isSearching} className="border border-instinct-foreground/40 px-6 py-3 text-sm font-semibold tracking-widest uppercase hover:border-instinct-purple disabled:opacity-40">
+                <button type="button" onClick={searchRelays} disabled={isSearching} className="border border-instinct-foreground/40 px-6 py-3 text-sm font-semibold tracking-widest uppercase hover:border-instinct-purple disabled:opacity-40 cursor-pointer">
                   {isSearching ? 'Recherche...' : 'Rechercher'}
                 </button>
               </div>
@@ -313,7 +313,7 @@ export function CheckoutForm() {
           subtotal={cart.subtotal}
           shippingCost={shippingCost}
           footer={
-            <button type="submit" className={cn(shopButtonClass, 'mt-6')}>
+            <button type="submit" className={cn(shopButtonClass, 'mt-6 cursor-pointer')}>
               Continuer
             </button>
           }
@@ -344,7 +344,7 @@ export function CheckoutForm() {
                     aria-checked={state.relayPoint?.code === point.code}
                     onClick={() => selectPoint(point)}
                     className={cn(
-                      'flex w-full items-start justify-between gap-3 border p-3 text-left text-sm',
+                      'flex w-full items-start justify-between gap-3 border p-3 text-left text-sm cursor-pointer',
                       state.relayPoint?.code === point.code ? 'border-instinct-purple bg-instinct-purple/10' : 'border-instinct-foreground/30 hover:border-instinct-purple'
                     )}
                   >

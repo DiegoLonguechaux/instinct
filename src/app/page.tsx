@@ -9,7 +9,7 @@ import { SectionDivider } from "@/components/home/SectionDivider";
 import { SiteFooter } from "@/components/home/SiteFooter";
 import { SiteHeader } from "@/components/home/SiteHeader";
 import dbConnect from "@/lib/db";
-import { totalStock } from "@/lib/merch";
+import { totalStock, variantsOf } from "@/lib/merch";
 import { ensureMerchSlugs } from "@/lib/slug";
 import { shuffle } from "@/lib/utils";
 import ConcertModel from "@/models/Concert";
@@ -82,6 +82,7 @@ export default async function Home() {
     sellOnline: item.sellOnline === true,
     inStock:
       totalStock({ sizes: item.sizes ?? [], stock: item.stock ?? 0, sizeStock: item.sizeStock ?? {} }) > 0,
+    variants: variantsOf({ sizes: item.sizes ?? [], stock: item.stock ?? 0, sizeStock: item.sizeStock ?? {} }),
   }));
 
   // GallerySection est un Client Component (lightbox) : mêmes contraintes de

@@ -50,7 +50,7 @@ export function CartLines({ lines, onNavigate }: CartLinesProps) {
                 <button
                   type="button"
                   aria-label="Diminuer la quantité"
-                  className="flex size-9 items-center justify-center hover:bg-instinct-foreground/10"
+                  className="flex size-9 items-center justify-center hover:bg-instinct-foreground/10 cursor-pointer"
                   onClick={() => setQuantity(line.merchId, line.size, line.quantity - 1)}
                 >
                   <Minus className="size-4" />
@@ -60,7 +60,7 @@ export function CartLines({ lines, onNavigate }: CartLinesProps) {
                   type="button"
                   aria-label="Augmenter la quantité"
                   disabled={line.quantity >= line.available}
-                  className="flex size-9 items-center justify-center hover:bg-instinct-foreground/10 disabled:opacity-30"
+                  className="flex size-9 items-center justify-center hover:bg-instinct-foreground/10 disabled:opacity-30 cursor-pointer"
                   onClick={() => setQuantity(line.merchId, line.size, line.quantity + 1)}
                 >
                   <Plus className="size-4" />
@@ -69,7 +69,7 @@ export function CartLines({ lines, onNavigate }: CartLinesProps) {
               <button
                 type="button"
                 aria-label={`Retirer ${line.title} du panier`}
-                className="flex size-9 items-center justify-center text-instinct-foreground/60 hover:text-instinct-purple"
+                className="flex size-9 items-center justify-center text-instinct-foreground/60 hover:text-instinct-purple cursor-pointer"
                 onClick={() => remove(line.merchId, line.size)}
               >
                 <Trash2 className="size-4" />

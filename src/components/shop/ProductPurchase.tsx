@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import { LOW_STOCK_THRESHOLD } from '@/lib/merch';
+import { cn } from '@/lib/utils';
 import { Minus, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useCart } from './CartProvider';
@@ -80,7 +80,7 @@ export function ProductPurchase({ merchId, variants, sellOnline }: ProductPurcha
                   setError('');
                 }}
                 className={cn(
-                  'min-w-14 border px-4 py-3 text-sm font-semibold',
+                  'min-w-14 border px-4 py-3 text-sm font-semibold cursor-pointer',
                   size === variant.size
                     ? 'border-instinct-purple bg-instinct-purple text-instinct-bg'
                     : 'border-instinct-foreground/40 hover:border-instinct-purple',
@@ -103,7 +103,7 @@ export function ProductPurchase({ merchId, variants, sellOnline }: ProductPurcha
           <button
             type="button"
             aria-label="Diminuer la quantité"
-            className="flex size-11 items-center justify-center hover:bg-instinct-foreground/10"
+            className="flex size-11 items-center justify-center hover:bg-instinct-foreground/10 cursor-pointer"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
           >
             <Minus className="size-4" />
@@ -112,7 +112,7 @@ export function ProductPurchase({ merchId, variants, sellOnline }: ProductPurcha
           <button
             type="button"
             aria-label="Augmenter la quantité"
-            className="flex size-11 items-center justify-center hover:bg-instinct-foreground/10"
+            className="flex size-11 items-center justify-center hover:bg-instinct-foreground/10 cursor-pointer"
             onClick={() => setQuantity((q) => Math.min(Math.max(remaining, 1), q + 1))}
           >
             <Plus className="size-4" />
@@ -126,7 +126,7 @@ export function ProductPurchase({ merchId, variants, sellOnline }: ProductPurcha
         </p>
       )}
 
-      <button type="button" onClick={handleAdd} className={shopButtonClass}>
+      <button type="button" onClick={handleAdd} className={shopButtonClass + ' cursor-pointer'}>
         Ajouter au panier
       </button>
     </div>
