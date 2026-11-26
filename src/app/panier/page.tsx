@@ -2,7 +2,7 @@ import { CartPageContent } from '@/components/shop/CartPageContent';
 import { ShopShell } from '@/components/shop/ShopShell';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = { title: 'Panier | INSTINCT' };
+export const metadata: Metadata = { title: 'Panier | INSTINCT', robots: { index: false } };
 export const dynamic = 'force-dynamic';
 
 export default function CartPage() {

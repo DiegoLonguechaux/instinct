@@ -36,6 +36,8 @@ export function HeroSection({ bandName, logoUrl }: HeroSectionProps) {
       <div className="absolute inset-0 bg-instinct-bg/10" />
 
       <div className="relative z-10 flex flex-col items-center gap-6" data-aos="fade-up">
+        {/* Le nom du groupe est une image : ce titre (invisible) donne à Google le titre principal de la page. */}
+        <h1 className="sr-only">{bandName} : groupe de hardcore</h1>
         {logoUrl && (
           <Image
             src={logoUrl}

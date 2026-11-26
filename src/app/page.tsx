@@ -8,7 +8,11 @@ import { ReleasesSection } from "@/components/home/ReleasesSection";
 import { SectionDivider } from "@/components/home/SectionDivider";
 import { SiteFooter } from "@/components/home/SiteFooter";
 import { SiteHeader } from "@/components/home/SiteHeader";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { appUrl } from "@/lib/app-url";
 import dbConnect from "@/lib/db";
+import { SITE_DESCRIPTION, SITE_TITLE } from "@/lib/seo";
+import type { Metadata } from "next";
 import { totalStock, variantsOf } from "@/lib/merch";
 import { ensureMerchSlugs } from "@/lib/slug";
 import { shuffle } from "@/lib/utils";
@@ -24,6 +28,24 @@ import ReleaseModel from "@/models/Release";
 // force le rendu dynamique pour que chaque visite lise les données Mongo
 // à jour.
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  await dbConnect();
+  const info = await GroupInfoModel.findOne({}).select("groupPhotoUrl").lean();
+  // Visuel des aperçus de lien (Instagram, WhatsApp, Discord...) : la photo du groupe.
+  const image = info?.groupPhotoUrl || undefined;
+
+  return {
+    alternates: { canonical: "/" },
+    openGraph: {
+      title: SITE_TITLE,
+      description: SITE_DESCRIPTION,
+      url: "/",
+      images: image ? [image] : undefined,
+    },
+    twitter: { title: SITE_TITLE, description: SITE_DESCRIPTION, images: image ? [image] : undefined },
+  };
+}
 
 export default async function Home() {
   await dbConnect();
@@ -99,8 +121,43 @@ export default async function Home() {
     }))
   );
 
+  // Données structurées : fiche du groupe, et chaque concert à venir (peut s'afficher dans Google).
+  const bandName = groupInfo?.bandName || "INSTINCT";
+  const siteUrl = appUrl();
+  const performer = { "@type": "MusicGroup", name: bandName, url: siteUrl };
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      ...performer,
+      genre: "Hardcore",
+      description: SITE_DESCRIPTION,
+      logo: groupInfo?.logoUrl || undefined,
+      image: groupInfo?.groupPhotoUrl || undefined,
+      email: groupInfo?.contactEmail || undefined,
+      sameAs: Object.values(groupInfo?.links ?? {}).filter(
+        (link): link is string => typeof link === "string" && link.startsWith("http")
+      ),
+    },
+    ...concerts
+      .filter((concert) => new Date(concert.date) >= startOfToday)
+      .map((concert) => ({
+        "@context": "https://schema.org",
+        "@type": "MusicEvent",
+        name: `${bandName} – ${concert.venue}`,
+        startDate: concert.date,
+        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+        location: { "@type": "Place", name: concert.venue, address: concert.venue },
+        performer,
+        description: concert.description || undefined,
+        url: concert.link || siteUrl,
+      })),
+  ];
+
   return (
     <>
+      <JsonLd data={structuredData} />
       <AosInit />
 
       <SiteHeader

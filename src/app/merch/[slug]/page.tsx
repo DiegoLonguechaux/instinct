@@ -1,6 +1,8 @@
 import { ProductGallery } from '@/components/shop/ProductGallery';
 import { ProductPurchase } from '@/components/shop/ProductPurchase';
+import { JsonLd } from '@/components/seo/JsonLd';
 import { ShopShell } from '@/components/shop/ShopShell';
+import { appUrl } from '@/lib/app-url';
 import dbConnect from '@/lib/db';
 import { formatPrice, variantsOf } from '@/lib/merch';
 import { ensureMerchSlugs } from '@/lib/slug';
@@ -30,6 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${product.title} | INSTINCT`,
     description,
+    alternates: { canonical: `/merch/${product.slug}` },
     openGraph: {
       title: product.title,
       description,
@@ -50,8 +53,31 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     sizeStock: product.sizeStock ?? {},
   });
 
+  const inStock = variants.some((variant) => variant.quantity > 0);
+
   return (
     <ShopShell merchBackground>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.title,
+          description: product.description || `${product.title}, le merch officiel d’INSTINCT.`,
+          image: product.images ?? [],
+          brand: { "@type": "Brand", name: "INSTINCT" },
+          // Une offre n'est annoncée que pour un article vendable en ligne.
+          offers:
+            product.sellOnline === true
+              ? {
+                  "@type": "Offer",
+                  url: `${appUrl()}/merch/${product.slug}`,
+                  priceCurrency: "EUR",
+                  price: product.price,
+                  availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                }
+              : undefined,
+        }}
+      />
       <Link
         href="/#le-merch"
         className="mb-8 inline-block text-sm tracking-widest text-instinct-foreground/70 uppercase hover:text-instinct-purple"

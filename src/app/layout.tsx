@@ -1,4 +1,6 @@
 import AuthProvider from "@/components/auth/AuthProvider";
+import { appUrl } from "@/lib/app-url";
+import { SITE_DESCRIPTION, SITE_TITLE } from "@/lib/seo";
 import { CartProvider } from "@/components/shop/CartProvider";
 import type { Metadata } from "next";
 import { Instrument_Serif, Roboto_Condensed } from "next/font/google";
@@ -17,8 +19,12 @@ const robotoCondensed = Roboto_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "INSTINCT",
-  description: "INSTINCT HARDCORE",
+  // Les URLs relatives (image de partage, canonique) sont résolues par rapport au site public.
+  metadataBase: new URL(appUrl()),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: { type: "website", siteName: "INSTINCT", locale: "fr_FR" },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({
@@ -27,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body
         className={`${instrumentSerif.variable} ${robotoCondensed.variable} antialiased`}
       >

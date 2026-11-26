@@ -2,8 +2,11 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 import { AdminDarkMode } from "@/components/admin/admin-dark-mode"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import type { Metadata } from "next"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
+
+export const metadata: Metadata = { title: "Administration | INSTINCT", robots: { index: false, follow: false } }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // Le middleware ne fait que décoder le JWT (il ne peut pas interroger la
